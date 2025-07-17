@@ -1,6 +1,16 @@
+// public/script.js
+
+const BACKEND_URL = 'https://sports-viz.onrender.com'; // Replace with actual Render URL
+
 async function fetchData(sport) {
-  const res = await fetch(`/api/data/${sport}`);
-  return await res.json();
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/data/${sport}`);
+    if (!res.ok) throw new Error('Network response was not ok');
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return [];
+  }
 }
 
 function mapDataToXY(data, sport) {
@@ -19,7 +29,7 @@ function mapDataToXY(data, sport) {
       }));
     default:
       return data.map(item => ({
-        x: Math.random() * 100, // fallback
+        x: Math.random() * 100,
         y: Math.random() * 100,
         label: item.team?.name || item.name
       }));
@@ -52,8 +62,8 @@ async function createChart(sport) {
         }
       },
       scales: {
-        x: { title: { display: true, text: 'X Axis Metric' } },
-        y: { title: { display: true, text: 'Y Axis Metric' } }
+        x: { title: { display: true, text: 'X Metric' } },
+        y: { title: { display: true, text: 'Y Metric' } }
       }
     }
   });
