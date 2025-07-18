@@ -1,43 +1,50 @@
-// src/server.js
-
-require('dotenv').config(); // ✅ Load environment variables first
+require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const apiRoutes = require('./routes/api');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors()); // Enable CORS for all routes
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Static files - serve from public directory
+// Request logging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
+
+// Static files
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 
-// API routes - mount before the catch-all route
+// Import and mount API routes
+const apiRoutes = require('./routes/api');
 app.use('/api', apiRoutes);
 
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
-// Catch-all route for SPA - this should be LAST
+// Catch-all for SPA
 app.get('*', (req, res) => {
-  // Only serve index.html for non-API routes
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(publicDir, 'index.html'));
-  } else {
+  if (req.path.startsWith('/api/')) {
     res.status(404).json({ error: 'API endpoint not found' });
+  } else {
+    res.sendFile(path.join(publicDir, 'index.html'));
   }
 });
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({ error: 'Internal server error' });
@@ -45,9 +52,9 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📁 Serving static files from: ${publicDir}`);
-  console.log(`🔗 API available at: http://localhost:${PORT}/api`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Static files: ${publicDir}`);
+  console.log(`API endpoint: http://localhost:${PORT}/api`);
 });
 
 module.exports = app;
