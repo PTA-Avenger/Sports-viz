@@ -8,28 +8,34 @@ async function fetchSportsData(sport, season = '2025') {
   switch (sport) {
     case 'baseball':
       url = `https://v3.football.api-sports.io/baseball/teams/statistics?league=1&season=${season}`;
-      headers['x-apisports-key'] = apiKey;
+      headers['x-rapidapi-key'] = apiKey;
+      headers['x-rapidapi-host'] = 'v3.football.api-sports.io';
       break;
+
     case 'basketball':
       url = `https://v3.football.api-sports.io/basketball/teams/statistics?league=12&season=${season}`;
-      headers['x-apisports-key'] = apiKey;
+      headers['x-rapidapi-key'] = apiKey;
+      headers['x-rapidapi-host'] = 'v3.football.api-sports.io';
       break;
+
     case 'football':
       url = `https://v3.football.api-sports.io/teams/statistics?league=39&season=${season}&team=33`;
-      headers['x-apisports-key'] = apiKey;
+      headers['x-rapidapi-key'] = apiKey;
+      headers['x-rapidapi-host'] = 'v3.football.api-sports.io';
       break;
+
     case 'f1':
-      url = `http://ergast.com/api/f1/${season}/constructorStandings.json`;
+      url = `https://v1.formula-1.api-sports.io/standings`; // or standings or races
+      headers['x-rapidapi-key'] = apiKey;
+      headers['x-rapidapi-host'] = 'v1.formula-1.api-sports.io';
       break;
   }
 
   try {
     const res = await axios.get(url, { headers });
-    return sport === 'f1'
-      ? res.data.MRData.StandingsTable.StandingsLists[0].ConstructorStandings
-      : res.data.response;
+    return res.data.response;
   } catch (err) {
-    console.error(err);
+    console.error(`Error fetching ${sport} data:`, err.response?.data || err.message);
     return [];
   }
 }
