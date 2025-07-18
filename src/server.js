@@ -1,62 +1,30 @@
-// src/routes/api.js
+// src/server.js
+
+require('dotenv').config(); // ✅ Add dotenv at the top
 
 const express = require('express');
-const router = express.Router();
-const axios = require('axios');
+const path = require('path');
+const apiRoutes = require('./routes/api');
 
-// Load environment variables
-require('dotenv').config();
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-const API_KEY = process.env.SPORTS_API_KEY || 'YOUR_FALLBACK_API_KEY';
+// Middleware
+app.use(express.json()); // Optional if you want to parse JSON
 
-// 🏀 Fetch basketball data
-async function fetchBasketballData() {
-  const response = await axios.get('https://v3.basketball.api-sports.io/games?season=2024', {
-    headers: { 'x-apisports-key': API_KEY }
-  });
-  return response.data;
-}
+// Static files
+const publicDir = path.join(__dirname, '..', 'public');
+app.use(express.static(publicDir));
 
-// ⚾ Fetch baseball data
-async function fetchBaseballData() {
-  const response = await axios.get('https://v1.baseball.api-sports.io/games?season=2024', {
-    headers: { 'x-apisports-key': API_KEY }
-  });
-  return response.data;
-}
+// API routes
+app.use('/api', apiRoutes);
 
-// 🏎️ Fetch F1 data
-async function fetchF1Data() {
-  const response = await axios.get('https://ergast.com/api/f1/current.json');
-  return response.data;
-}
-
-// Main route handler
-router.get('/data/:sport', async (req, res) => {
-  const { sport } = req.params;
-  console.log(`Incoming request for: ${sport}`);
-
-  try {
-    let data;
-    switch (sport) {
-      case 'basketball':
-        data = await fetchBasketballData();
-        break;
-      case 'baseball':
-        data = await fetchBaseballData();
-        break;
-      case 'f1':
-        data = await fetchF1Data();
-        break;
-      default:
-        return res.status(404).json({ error: 'Sport not supported' });
-    }
-
-    res.json(data);
-  } catch (err) {
-    console.error(`❌ Failed to fetch ${sport} data:`, err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+// Fallback for SPA
+app.get('*', (req, res) => {
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-module.exports = router;
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
