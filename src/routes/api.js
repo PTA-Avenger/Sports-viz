@@ -25,11 +25,12 @@ async function fetchBaseballData() {
   return response.data;
 }
 
-// 🏎️ Fetch F1 data
 async function fetchF1Data() {
-  const response = await axios.get('https://ergast.com/api/f1/current.json');
-  return response.data;
+  const response = await axios.get('https://ergast.com/api/f1/current/constructorStandings.json');
+  const standings = response.data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings || [];
+  return standings;
 }
+
 
 // Main route handler
 router.get('/data/:sport', async (req, res) => {
