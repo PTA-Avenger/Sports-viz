@@ -1,3 +1,38 @@
+const express = require('express');
+const router = express.Router();
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+require('dotenv').config();
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+// POST /ai/insights/:sport
+router.post('/insights/:sport', async (req, res) => {
+  const sport = req.params.sport;
+  const data = req.body.data;
+  if (!sport || !data) {
+    return res.status(400).json({ error: 'Sport and data are required.' });
+  }
+  try {
+    const prompt = `Summarize the top trends and standout performances for this ${sport} dataset.`;
+    const geminiRes = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        contents: [
+          { parts: [ { text: prompt } ] },
+          { parts: [ { text: JSON.stringify(data).slice(0, 12000) } ] }
+        ]
+      }
+    );
+    const summary = geminiRes.data.candidates?.[0]?.content?.parts?.[0]?.text || 'No summary available.';
+    res.json({ summary });
+  } catch (error) {
+    console.error('Gemini API error:', error.message);
+    res.status(500).json({ error: 'Failed to get AI insights.' });
+  }
+});
+
 // POST /ai/sentiment/:team
 router.post('/sentiment/:team', async (req, res) => {
   const team = req.params.team;
@@ -21,6 +56,7 @@ router.post('/sentiment/:team', async (req, res) => {
     res.status(500).json({ error: 'Failed to get sentiment.' });
   }
 });
+
 // POST /ai/chat
 router.post('/chat', async (req, res) => {
   const { question, context } = req.body;
@@ -46,6 +82,7 @@ router.post('/chat', async (req, res) => {
     res.status(500).json({ error: 'Failed to get chat answer.' });
   }
 });
+
 // POST /ai/semantic
 router.post('/semantic', async (req, res) => {
   const { query, data } = req.body;
@@ -76,6 +113,7 @@ router.post('/semantic', async (req, res) => {
     res.status(500).json({ error: 'Failed to get semantic search results.' });
   }
 });
+
 // POST /ai/explain/:sport
 router.post('/explain/:sport', async (req, res) => {
   const sport = req.params.sport;
@@ -100,6 +138,7 @@ router.post('/explain/:sport', async (req, res) => {
     res.status(500).json({ error: 'Failed to get anomaly explanation.' });
   }
 });
+
 // POST /ai/recommendations
 router.post('/recommendations', async (req, res) => {
   const { selections } = req.body;
@@ -130,6 +169,7 @@ router.post('/recommendations', async (req, res) => {
     res.status(500).json({ error: 'Failed to get AI recommendations.' });
   }
 });
+
 // POST /ai/predict/:sport
 router.post('/predict/:sport', async (req, res) => {
   const sport = req.params.sport;
@@ -162,44 +202,8 @@ router.post('/predict/:sport', async (req, res) => {
     res.status(500).json({ error: 'Failed to get AI predictions.' });
   }
 });
-const express = require('express');
-const router = express.Router();
-const axios = require('axios');
-require('dotenv').config();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-// POST /ai/insights/:sport
-router.post('/insights/:sport', async (req, res) => {
-  const sport = req.params.sport;
-  const data = req.body.data;
-  if (!sport || !data) {
-    return res.status(400).json({ error: 'Sport and data are required.' });
-  }
-  try {
-    const prompt = `Summarize the top trends and standout performances for this ${sport} dataset.`;
-    const geminiRes = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        contents: [
-          { parts: [ { text: prompt } ] },
-          { parts: [ { text: JSON.stringify(data).slice(0, 12000) } ] }
-        ]
-      }
-    );
-    const summary = geminiRes.data.candidates?.[0]?.content?.parts?.[0]?.text || 'No summary available.';
-    res.json({ summary });
-  } catch (error) {
-    console.error('Gemini API error:', error.message);
-    res.status(500).json({ error: 'Failed to get AI insights.' });
-  }
-});
-
-module.exports = router;
-
-// --- Personalized Dashboard Layout Recommendation ---
-// Route: /ai/dashboard/recommend
-// Output: Suggested dashboard layout for user focused on ERA and OPS
+// POST /ai/dashboard/recommend - Personalized Dashboard Layout Recommendation
 router.post('/dashboard/recommend', async (req, res) => {
   try {
     const prompt = `Suggest a dashboard layout for a user who views mostly ERA and OPS charts. Include layout sections, recommended widgets, and a brief rationale. Format as JSON.`;
@@ -224,12 +228,7 @@ router.post('/dashboard/recommend', async (req, res) => {
   }
 });
 
-// --- Auto-Generated Reports ---
-// Route: /ai/reports/:sport
-// Output: Markdown file with performance summary for each team over last 3 games
-const fs = require('fs');
-const path = require('path');
-
+// POST /ai/reports/:sport - Auto-Generated Reports
 router.post('/reports/:sport', async (req, res) => {
   const { sport } = req.params;
   const { data } = req.body; // expects array of teams with recent games
@@ -248,10 +247,19 @@ router.post('/reports/:sport', async (req, res) => {
       }
     );
     const markdown = geminiRes.data.candidates?.[0]?.content?.parts?.[0]?.text || '# No report generated.';
+    
     // Save to file (for download)
     const filename = `report_${sport}_${Date.now()}.md`;
     const filePath = path.join(__dirname, '../../public', filename);
+    
+    // Ensure public directory exists
+    const publicDir = path.dirname(filePath);
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+    
     fs.writeFileSync(filePath, markdown, 'utf8');
+    
     // Return markdown and download link
     res.json({
       markdown,
@@ -262,3 +270,5 @@ router.post('/reports/:sport', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate report.' });
   }
 });
+
+module.exports = router;
