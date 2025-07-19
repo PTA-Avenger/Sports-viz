@@ -1,6 +1,8 @@
+const express = require('express');
+const router = express.Router();
 // --- Baseball Advanced & Fantasy Stats Endpoint ---
 // GET /api/baseball/stats?team=ID&player=ID&season=YYYY
-router.get('/baseball/stats', async (req, res) => {
+// ...existing code...
   const season = req.query.season || '2024';
   const team = req.query.team;
   const player = req.query.player;
@@ -39,12 +41,10 @@ router.get('/baseball/stats', async (req, res) => {
       stats.games = gamesRes.data.response || [];
     }
     res.json(stats);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch baseball stats', message: error.message });
-  }
-});
-const express = require('express');
-const router = express.Router();
+} catch (error) {
+  res.status(500).json({ error: 'Failed to fetch baseball stats', message: error.message });
+}
+ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 
