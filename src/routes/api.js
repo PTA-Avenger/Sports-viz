@@ -44,7 +44,6 @@ router.get('/baseball/stats', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch baseball stats', message: error.message });
   }
 });
- const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 
