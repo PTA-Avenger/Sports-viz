@@ -8,12 +8,15 @@
 </head>
 <body>
   <h1>Sports Data Visualization</h1>
-  <select id="sportSelect">
-    <option value="baseball">Baseball</option>
-    <option value="basketball">Basketball</option>
-    <option value="football">Football</option>
-    <option value="f1">F1</option>
-  </select>
+  <div id="controlsBar" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;background:#f8fafd;border-radius:10px;box-shadow:0 1px 8px #0001;padding:12px 18px 8px 18px;margin:18px auto 10px auto;max-width:900px;font-size:1em;">
+    <select id="sportSelect">
+      <option value="baseball">Baseball</option>
+      <option value="basketball">Basketball</option>
+      <option value="football">Football</option>
+      <option value="f1">F1</option>
+    </select>
+    <!-- The season dropdown will be injected here by script.js -->
+  </div>
   <div style="display:flex;gap:24px;align-items:flex-start;justify-content:center;">
     <canvas id="myChart"></canvas>
     <div id="recommendSidebar" style="min-width:220px;max-width:260px;display:none;"></div>

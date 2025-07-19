@@ -11,6 +11,12 @@ function appendChatMessage(text, sender = 'user') {
 
 window.addEventListener('DOMContentLoaded', () => {
   // ...existing code...
+  populateSeasonDropdown();
+  // Initial chart render
+  const sport = document.getElementById('sportSelect')?.value;
+  const seasonSelect = document.getElementById('seasonSelect');
+  const seasons = Array.from(seasonSelect?.selectedOptions || []).map(o => o.value);
+  createChart(sport, seasons);
 
   // Chart type and metric selectors
   const chartControls = document.createElement('div');
