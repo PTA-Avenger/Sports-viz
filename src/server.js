@@ -42,9 +42,11 @@ app.use((req, res, next) => {
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 
-// Import and mount API routes
+// Import and mount API and AI routes
 const apiRoutes = require('./routes/api');
+const aiRoutes = require('./routes/ai');
 app.use('/api', apiRoutes);
+app.use('/ai', aiRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

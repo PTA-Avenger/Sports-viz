@@ -14,7 +14,20 @@
     <option value="football">Football</option>
     <option value="f1">F1</option>
   </select>
-  <canvas id="myChart"></canvas>
+  <div style="display:flex;gap:24px;align-items:flex-start;justify-content:center;">
+    <canvas id="myChart"></canvas>
+    <div id="recommendSidebar" style="min-width:220px;max-width:260px;display:none;"></div>
+  </div>
+  <div id="insightsPanel" style="max-width:700px;margin:24px auto 0 auto;padding:16px;background:#f8f8ff;border-radius:8px;box-shadow:0 2px 8px #0001;display:none;"></div>
+
+  <div id="chatbotWidget" style="position:fixed;bottom:24px;right:24px;z-index:2000;width:340px;max-width:90vw;">
+    <div style="background:#222;color:#fff;padding:10px 16px;border-radius:8px 8px 0 0;font-weight:bold;">Ask the Analyst</div>
+    <div id="chatbotMessages" style="background:#fff;height:180px;overflow-y:auto;padding:10px 8px 8px 8px;border:1px solid #ddd;border-top:none;"></div>
+    <form id="chatbotForm" style="display:flex;border:1px solid #ddd;border-top:none;background:#fafbfc;border-radius:0 0 8px 8px;">
+      <input id="chatbotInput" type="text" placeholder="Ask a question..." style="flex:1;padding:8px;border:none;border-radius:0 0 0 8px;outline:none;" />
+      <button type="submit" style="background:#3498db;color:#fff;border:none;padding:0 18px;border-radius:0 0 8px 0;cursor:pointer;font-weight:bold;">Send</button>
+    </form>
+  </div>
   <script src="script.js"></script>
 </body>
 </html>
