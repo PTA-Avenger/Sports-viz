@@ -245,7 +245,356 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     appendChatMessage('🏆 Welcome to Sports Analytics! I can help you understand team performance, predict trends, and discover insights. What would you like to explore?', 'assistant');
   }, 1000);
+  
+  // Set up chatbot form
+  setupChatbotForm();
 });
+
+// Add season dropdown population function
+function populateSeasonDropdown() {
+  const seasonSelect = document.getElementById('seasonSelect');
+  if (!seasonSelect) return;
+  
+  seasonSelect.innerHTML = '';
+  const currentYear = new Date().getFullYear();
+  
+  // Add seasons from current year back to 2019
+  for (let year = currentYear; year >= 2019; year--) {
+    const option = document.createElement('option');
+    option.value = year.toString();
+    option.textContent = year.toString();
+    if (year === currentYear) {
+      option.selected = true;
+    }
+    seasonSelect.appendChild(option);
+  }
+}
+
+// Add metric selector population function
+function populateMetricSelectors(data, sport) {
+  const xMetricSelect = document.getElementById('xMetricSelect');
+  const yMetricSelect = document.getElementById('yMetricSelect');
+  
+  if (!xMetricSelect || !yMetricSelect || !data || data.length === 0) return;
+  
+  // Get metrics based on sport and actual data structure
+  const metrics = getAvailableMetrics(data, sport);
+  
+  // Clear existing options
+  xMetricSelect.innerHTML = '';
+  yMetricSelect.innerHTML = '';
+  
+  // Populate both selectors
+  metrics.forEach((metric, index) => {
+    const xOption = document.createElement('option');
+    xOption.value = metric.key;
+    xOption.textContent = metric.label;
+    xMetricSelect.appendChild(xOption);
+    
+    const yOption = document.createElement('option');
+    yOption.value = metric.key;
+    yOption.textContent = metric.label;
+    yMetricSelect.appendChild(yOption);
+  });
+  
+  // Set default selections
+  if (metrics.length > 1) {
+    xMetricSelect.selectedIndex = 0;
+    yMetricSelect.selectedIndex = 1;
+  }
+}
+
+// Get available metrics based on data structure and sport
+function getAvailableMetrics(data, sport) {
+  if (!data || data.length === 0) return [];
+  
+  const firstItem = data[0];
+  const metrics = [];
+  
+  // Define sport-specific metrics
+  const sportMetrics = {
+    baseball: [
+      { key: 'batting.ops', label: 'OPS', path: ['batting', 'ops'] },
+      { key: 'batting.avg', label: 'Batting Average', path: ['batting', 'avg'] },
+      { key: 'batting.hr', label: 'Home Runs', path: ['batting', 'hr'] },
+      { key: 'batting.runs', label: 'Runs', path: ['batting', 'runs'] },
+      { key: 'batting.rbi', label: 'RBI', path: ['batting', 'rbi'] },
+      { key: 'pitching.era', label: 'ERA', path: ['pitching', 'era'] },
+      { key: 'pitching.wins', label: 'Wins', path: ['pitching', 'wins'] },
+      { key: 'pitching.strikeouts', label: 'Strikeouts', path: ['pitching', 'strikeouts'] },
+      { key: 'wins', label: 'Team Wins', path: ['wins'] },
+      { key: 'losses', label: 'Team Losses', path: ['losses'] },
+      { key: 'rank', label: 'Rank', path: ['rank'] }
+    ],
+    basketball: [
+      { key: 'ppg', label: 'Points Per Game', path: ['ppg'] },
+      { key: 'rpg', label: 'Rebounds Per Game', path: ['rpg'] },
+      { key: 'apg', label: 'Assists Per Game', path: ['apg'] },
+      { key: 'pie', label: 'PIE', path: ['pie'] },
+      { key: 'wins', label: 'Wins', path: ['wins'] },
+      { key: 'losses', label: 'Losses', path: ['losses'] },
+      { key: 'rank', label: 'Rank', path: ['rank'] }
+    ],
+    football: [
+      { key: 'goals.for', label: 'Goals For', path: ['goals', 'for'] },
+      { key: 'goals.against', label: 'Goals Against', path: ['goals', 'against'] },
+      { key: 'assists', label: 'Assists', path: ['assists'] },
+      { key: 'xg', label: 'Expected Goals', path: ['xg'] },
+      { key: 'wins', label: 'Wins', path: ['wins'] },
+      { key: 'draws', label: 'Draws', path: ['draws'] },
+      { key: 'losses', label: 'Losses', path: ['losses'] },
+      { key: 'points', label: 'Points', path: ['points'] },
+      { key: 'rank', label: 'Rank', path: ['rank'] }
+    ],
+    f1: [
+      { key: 'points', label: 'Points', path: ['points'] },
+      { key: 'wins', label: 'Wins', path: ['wins'] },
+      { key: 'position', label: 'Position', path: ['position'] }
+    ],
+    nba: [
+      { key: 'ppg', label: 'Points Per Game', path: ['ppg'] },
+      { key: 'rpg', label: 'Rebounds Per Game', path: ['rpg'] },
+      { key: 'apg', label: 'Assists Per Game', path: ['apg'] },
+      { key: 'pie', label: 'PIE', path: ['pie'] },
+      { key: 'wins', label: 'Wins', path: ['wins'] },
+      { key: 'losses', label: 'Losses', path: ['losses'] },
+      { key: 'rank', label: 'Rank', path: ['rank'] }
+    ],
+    nfl: [
+      { key: 'passing.yards', label: 'Passing Yards', path: ['passing', 'yards'] },
+      { key: 'passing.touchdowns', label: 'Passing TDs', path: ['passing', 'touchdowns'] },
+      { key: 'rushing.yards', label: 'Rushing Yards', path: ['rushing', 'yards'] },
+      { key: 'rushing.touchdowns', label: 'Rushing TDs', path: ['rushing', 'touchdowns'] },
+      { key: 'wins', label: 'Wins', path: ['wins'] },
+      { key: 'losses', label: 'Losses', path: ['losses'] },
+      { key: 'points_for', label: 'Points For', path: ['points_for'] },
+      { key: 'points_against', label: 'Points Against', path: ['points_against'] },
+      { key: 'rank', label: 'Rank', path: ['rank'] }
+    ]
+  };
+  
+  const availableMetrics = sportMetrics[sport] || sportMetrics.baseball;
+  
+  // Filter metrics that actually exist in the data
+  return availableMetrics.filter(metric => {
+    return hasNestedProperty(firstItem, metric.path);
+  });
+}
+
+// Helper function to check if nested property exists
+function hasNestedProperty(obj, path) {
+  if (!obj || !path || path.length === 0) return false;
+  
+  let current = obj;
+  for (const key of path) {
+    if (current === null || current === undefined || !(key in current)) {
+      return false;
+    }
+    current = current[key];
+  }
+  return current !== null && current !== undefined;
+}
+
+// Helper function to get nested property value
+function getNestedProperty(obj, path) {
+  if (!obj || !path || path.length === 0) return undefined;
+  
+  let current = obj;
+  for (const key of path) {
+    if (current === null || current === undefined || !(key in current)) {
+      return undefined;
+    }
+    current = current[key];
+  }
+  return current;
+}
+
+// Get default metrics for each sport
+function getDefaultXMetric(sport) {
+  const defaults = {
+    baseball: 'batting.ops',
+    basketball: 'ppg',
+    football: 'goals.for',
+    f1: 'points',
+    nba: 'ppg',
+    nfl: 'passing.yards'
+  };
+  return defaults[sport] || 'wins';
+}
+
+function getDefaultYMetric(sport) {
+  const defaults = {
+    baseball: 'pitching.era',
+    basketball: 'rpg',
+    football: 'goals.against',
+    f1: 'wins',
+    nba: 'rpg',
+    nfl: 'rushing.yards'
+  };
+  return defaults[sport] || 'losses';
+}
+
+// Add chart rendering function
+function renderChart(data, sport, chartType, xMetric, yMetric) {
+  const canvas = document.getElementById('myChart');
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  
+  // Destroy existing chart
+  if (window.chartInstance) {
+    window.chartInstance.destroy();
+  }
+  
+  // Prepare data for Chart.js
+  const chartData = data.map(item => {
+    const xPath = xMetric.split('.');
+    const yPath = yMetric.split('.');
+    
+    const x = getNestedProperty(item, xPath) || 0;
+    const y = getNestedProperty(item, yPath) || 0;
+    const label = item.team?.name || item.name || 'Unknown';
+    
+    return {
+      x: Number(x) || 0,
+      y: Number(y) || 0,
+      label: label
+    };
+  }).filter(item => !isNaN(item.x) && !isNaN(item.y));
+  
+  // Chart configuration
+  const config = {
+    type: chartType === 'heatmap' ? 'scatter' : chartType,
+    data: {
+      datasets: [{
+        label: `${sport.charAt(0).toUpperCase() + sport.slice(1)} Data`,
+        data: chartData,
+        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 2,
+        pointRadius: 6,
+        pointHoverRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: `${sport.charAt(0).toUpperCase() + sport.slice(1)} Analysis`,
+          font: {
+            size: 16,
+            weight: 'bold'
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const point = context.raw;
+              return `${point.label}: (${point.x}, ${point.y})`;
+            }
+          }
+        },
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: xMetric.replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase())
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: yMetric.replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase())
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          }
+        }
+      }
+    }
+  };
+  
+  // Adjust for different chart types
+  if (chartType === 'bar') {
+    config.data.labels = chartData.map(item => item.label);
+    config.data.datasets[0].data = chartData.map(item => item.y);
+    delete config.data.datasets[0].pointRadius;
+    delete config.data.datasets[0].pointHoverRadius;
+  } else if (chartType === 'line') {
+    config.data.labels = chartData.map(item => item.x);
+    config.data.datasets[0].data = chartData.map(item => item.y);
+    config.data.datasets[0].fill = false;
+    delete config.data.datasets[0].pointRadius;
+    delete config.data.datasets[0].pointHoverRadius;
+  }
+  
+  // Create the chart
+  window.chartInstance = new Chart(ctx, config);
+}
+
+// Setup chatbot form
+function setupChatbotForm() {
+  const chatForm = document.getElementById('chatbotForm');
+  const chatInput = document.getElementById('chatbotInput');
+  
+  if (chatForm && chatInput) {
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const question = chatInput.value.trim();
+      if (!question) return;
+      
+      // Add user message
+      appendChatMessage(question, 'user');
+      chatInput.value = '';
+      
+      // Add thinking message
+      appendChatMessage('🤔 Let me analyze that...', 'assistant');
+      
+      try {
+        const response = await fetch('/ai/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ question })
+        });
+        
+        const result = await response.json();
+        
+        // Remove thinking message
+        const messages = document.getElementById('chatbotMessages');
+        if (messages.lastChild) {
+          messages.removeChild(messages.lastChild);
+        }
+        
+        // Add AI response
+        appendChatMessage(result.answer || 'Sorry, I couldn\'t process that question.', 'assistant');
+        
+      } catch (error) {
+        console.error('Chat error:', error);
+        
+        // Remove thinking message
+        const messages = document.getElementById('chatbotMessages');
+        if (messages.lastChild) {
+          messages.removeChild(messages.lastChild);
+        }
+        
+        // Add error message
+        appendChatMessage('Sorry, I\'m having trouble connecting right now. Please try again later.', 'assistant');
+      }
+    });
+  }
+}
 
 function addSeasonDropdownToControls() {
   const controlsGrid = document.querySelector('.controls-grid');
@@ -266,11 +615,6 @@ function addSeasonDropdownToControls() {
 }
 
 function initializeChartControls() {
-  // Check if chart controls already exist
-  if (document.getElementById('chartTypeSelect')) {
-    return;
-  }
-  
   // Chart type selector is already in HTML, just add event listener
   const chartTypeSelect = document.getElementById('chartTypeSelect');
   if (chartTypeSelect) {
