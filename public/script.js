@@ -12,11 +12,27 @@ function appendChatMessage(text, sender = 'user') {
 window.addEventListener('DOMContentLoaded', () => {
   // ...existing code...
   populateSeasonDropdown();
-  // Initial chart render
-  const sport = document.getElementById('sportSelect')?.value;
-  const seasonSelect = document.getElementById('seasonSelect');
-  const seasons = Array.from(seasonSelect?.selectedOptions || []).map(o => o.value);
-  createChart(sport, seasons);
+  
+  // Wait a moment for the season dropdown to be populated, then create initial chart
+  setTimeout(() => {
+    const sport = document.getElementById('sportSelect')?.value;
+    const seasonSelect = document.getElementById('seasonSelect');
+    const seasons = Array.from(seasonSelect?.selectedOptions || []).map(o => o.value);
+    
+    // If no seasons are selected, default to current year
+    if (seasons.length === 0) {
+      const currentYear = new Date().getFullYear().toString();
+      const currentYearOption = seasonSelect?.querySelector(`option[value="${currentYear}"]`);
+      if (currentYearOption) {
+        currentYearOption.selected = true;
+        seasons.push(currentYear);
+      }
+    }
+    
+    if (sport && seasons.length > 0) {
+      createChart(sport, seasons);
+    }
+  }, 100);
 
   // Chart type and metric selectors
   const chartControls = document.createElement('div');
@@ -157,8 +173,23 @@ window.addEventListener('DOMContentLoaded', () => {
   if (sportSelect) {
     sportSelect.addEventListener('change', e => {
       updateMetricSelectors(e.target.value);
+      // Also update chart when sport changes
+      const seasons = Array.from(document.getElementById('seasonSelect')?.selectedOptions || []).map(o => o.value);
+      createChart(e.target.value, seasons);
     });
     updateMetricSelectors(sportSelect.value);
+  }
+
+  // Add event listener for season selector changes
+  const seasonSelect = document.getElementById('seasonSelect');
+  if (seasonSelect) {
+    seasonSelect.addEventListener('change', () => {
+      const sport = sportSelect?.value;
+      const seasons = Array.from(seasonSelect.selectedOptions).map(o => o.value);
+      if (sport && seasons.length > 0) {
+        createChart(sport, seasons);
+      }
+    });
   }
 
   // Redraw chart on selector change
@@ -468,16 +499,26 @@ async function createChart(sport, seasons) {
   const datasets = await Promise.all(seasons.map(async (season) => {
     try {
       let url = `${BACKEND_URL}/api/data/${sport}?season=${season}`;
+      console.log(`Loading data from: ${url}`);
+      
       const res = await fetch(url);
-      if (!res.ok) throw new Error('Network response was not ok');
-      const raw = await res.json();
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const responseData = await res.json();
+      console.log(`Response for ${sport} ${season}:`, responseData);
+      
+      // Handle the new API response format with 'data' property
+      const raw = responseData.data || responseData || [];
+      console.log(`Raw data for ${sport} ${season}:`, raw);
+      
       // Map data to selected metrics
       let data = [];
       if (chartType === 'heatmap') {
         // For now, fake heatmap data (random grid)
         data = Array.from({length: 10}, (_, i) => Array.from({length: 10}, (_, j) => Math.floor(Math.random()*100)));
       } else {
-        data = (raw || []).map(item => {
+        data = (Array.isArray(raw) ? raw : []).map(item => {
           let x = getNested(item.statistics, xMetric) ?? getNested(item, xMetric) ?? 0;
           let y = getNested(item.statistics, yMetric) ?? getNested(item, yMetric) ?? 0;
           // Fallback for F1
@@ -488,10 +529,13 @@ async function createChart(sport, seasons) {
           return {
             x: Number(x),
             y: Number(y),
-            label: item.team?.name || item.player?.name || item.Constructor?.name || item.name
+            label: item.team?.name || item.player?.name || item.Constructor?.name || item.name || `Item ${Math.random().toString(36).substr(2, 5)}`
           };
-        });
+        }).filter(item => !isNaN(item.x) && !isNaN(item.y)); // Filter out invalid data points
       }
+      
+      console.log(`Processed data for ${sport} ${season}:`, data);
+      
       const color = seasonColors[season] || { bg: 'rgba(54, 162, 235, 0.7)', border: 'rgba(54, 162, 235, 1)' };
       const isCurrent = season == getCurrentYear();
       return {
@@ -504,7 +548,8 @@ async function createChart(sport, seasons) {
         borderDash: isCurrent ? [] : [6, 6],
       };
     } catch (e) {
-      showError(`Failed to load data for season ${season}`);
+      console.error(`Failed to load data for season ${season}:`, e);
+      showError(`Failed to load data for season ${season}: ${e.message}`);
       return null;
     }
   }));
