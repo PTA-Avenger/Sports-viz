@@ -104,48 +104,59 @@ function getCacheFile(sport, season) {
   return path.join(CACHE_DIR, `${sport}_${season}.json`);
 }
 
-// Improved API request helper with better error handling
-async function makeAPIRequest(url, params, headers, sport = 'unknown') {
+// Unified API request helper with better error handling and logging
+async function makeAPIRequest(url, params, headers, description) {
   try {
-    console.log(`Making API request for ${sport}:`, {
+    console.log(`Making API request for ${description}:`, {
       url,
       params,
       headers: Object.keys(headers)
     });
-    
+
     const response = await axios.get(url, {
       params,
-      headers,
-      timeout: 10000
+      headers: {
+        ...headers,
+        'User-Agent': 'Sports-Viz-App/1.0'
+      },
+      timeout: 15000 // 15 second timeout
     });
-    
-    console.log(`API response for ${sport}:`, {
+
+    console.log(`API response for ${description}:`, {
       status: response.status,
       dataType: typeof response.data,
-      hasResponse: !!response.data.response,
-      responseLength: Array.isArray(response.data.response) ? response.data.response.length : 'not array',
-      firstItem: Array.isArray(response.data.response) && response.data.response.length > 0 ? response.data.response[0] : 'none'
+      hasResponse: !!response.data?.response,
+      responseLength: response.data?.response?.length || 0,
+      firstItem: response.data?.response?.length > 0 ? Object.keys(response.data.response[0]) : 'none'
     });
-    
+
+    // Handle API-Sports response format
+    if (response.data && response.data.response) {
+      return {
+        success: true,
+        data: response.data.response
+      };
+    }
+
     return {
-      success: true,
-      data: response.data.response || response.data || [],
-      status: response.status
+      success: false,
+      data: [],
+      error: 'No response data'
     };
+
   } catch (error) {
-    console.error(`${sport} API error:`, {
+    console.log(`${description} API error:`, {
       url,
       params,
       status: error.response?.status,
       message: error.message,
       data: error.response?.data
     });
-    
+
     return {
       success: false,
-      error: error.message,
-      status: error.response?.status || 500,
-      data: []
+      data: [],
+      error: error.message
     };
   }
 }
@@ -153,14 +164,17 @@ async function makeAPIRequest(url, params, headers, sport = 'unknown') {
 // Unified data fetchers with consistent API endpoints and mock fallbacks
 async function fetchBasketballData(season = '2024') {
   // Fixed Basketball API domain - using correct API-Sports domain
-  const seasonsToTry = [season, '2024', '2023', '2022', '2021'];
+  const seasonsToTry = [season, '2024', '2023', '2022', '2021', '2020', '2019'];
   
   for (const trySeason of seasonsToTry) {
     // Try standings first, then teams as fallback
     let result = await makeAPIRequest(
       'https://v1.basketball.api-sports.io/standings',
       { league: 12, season: trySeason }, // NBA league
-      { 'x-apisports-key': API_KEY },
+      { 
+        'x-rapidapi-key': API_KEY,
+        'x-rapidapi-host': 'v1.basketball.api-sports.io'
+      },
       'Basketball Standings'
     );
     
@@ -169,7 +183,10 @@ async function fetchBasketballData(season = '2024') {
       result = await makeAPIRequest(
         'https://v1.basketball.api-sports.io/teams',
         { league: 12, season: trySeason },
-        { 'x-apisports-key': API_KEY },
+        { 
+          'x-rapidapi-key': API_KEY,
+          'x-rapidapi-host': 'v1.basketball.api-sports.io'
+        },
         'Basketball Teams'
       );
     }
@@ -239,14 +256,17 @@ async function fetchBasketballData(season = '2024') {
 // Add NBA data fetcher using the NBA-specific API
 async function fetchNBAData(season = '2024') {
   // NBA API uses different base URL
-  const seasonsToTry = [season, '2024', '2023', '2022', '2021'];
+  const seasonsToTry = [season, '2024', '2023', '2022', '2021', '2020', '2019'];
   
   for (const trySeason of seasonsToTry) {
     // Try standings first, then teams as fallback
     let result = await makeAPIRequest(
       'https://v2.nba.api-sports.io/standings',
       { league: 'standard', season: trySeason },
-      { 'x-apisports-key': API_KEY },
+      { 
+        'x-rapidapi-key': API_KEY,
+        'x-rapidapi-host': 'v2.nba.api-sports.io'
+      },
       'NBA Standings'
     );
     
@@ -255,7 +275,10 @@ async function fetchNBAData(season = '2024') {
       result = await makeAPIRequest(
         'https://v2.nba.api-sports.io/teams',
         { league: 'standard', season: trySeason },
-        { 'x-apisports-key': API_KEY },
+        { 
+          'x-rapidapi-key': API_KEY,
+          'x-rapidapi-host': 'v2.nba.api-sports.io'
+        },
         'NBA Teams'
       );
     }
@@ -324,14 +347,17 @@ async function fetchNBAData(season = '2024') {
 
 // Add NFL data fetcher
 async function fetchNFLData(season = '2024') {
-  const seasonsToTry = [season, '2024', '2023', '2022'];
+  const seasonsToTry = [season, '2024', '2023', '2022', '2021', '2020', '2019'];
   
   for (const trySeason of seasonsToTry) {
     // Try standings first, then teams as fallback
     let result = await makeAPIRequest(
       'https://v1.american-football.api-sports.io/standings',
       { league: 1, season: trySeason }, // NFL league
-      { 'x-apisports-key': API_KEY },
+      { 
+        'x-rapidapi-key': API_KEY,
+        'x-rapidapi-host': 'v1.american-football.api-sports.io'
+      },
       'NFL Standings'
     );
     
@@ -340,7 +366,10 @@ async function fetchNFLData(season = '2024') {
       result = await makeAPIRequest(
         'https://v1.american-football.api-sports.io/teams',
         { league: 1, season: trySeason },
-        { 'x-apisports-key': API_KEY },
+        { 
+          'x-rapidapi-key': API_KEY,
+          'x-rapidapi-host': 'v1.american-football.api-sports.io'
+        },
         'NFL Teams'
       );
     }
@@ -409,14 +438,17 @@ async function fetchNFLData(season = '2024') {
 
 async function fetchBaseballData(season = '2024') {
   // Try multiple seasons starting with the requested one
-  const seasonsToTry = [season, '2024', '2023', '2022'];
+  const seasonsToTry = [season, '2024', '2023', '2022', '2021', '2020', '2019'];
   
   for (const trySeason of seasonsToTry) {
-    // Try standings first, then teams as fallback
+    // Try standings first with correct RapidAPI headers
     let result = await makeAPIRequest(
       'https://v1.baseball.api-sports.io/standings',
       { league: 1, season: trySeason }, // MLB league
-      { 'x-apisports-key': API_KEY },
+      { 
+        'x-rapidapi-key': API_KEY,
+        'x-rapidapi-host': 'v1.baseball.api-sports.io'
+      },
       'Baseball Standings'
     );
     
@@ -425,8 +457,24 @@ async function fetchBaseballData(season = '2024') {
       result = await makeAPIRequest(
         'https://v1.baseball.api-sports.io/teams',
         { league: 1, season: trySeason },
-        { 'x-apisports-key': API_KEY },
+        { 
+          'x-rapidapi-key': API_KEY,
+          'x-rapidapi-host': 'v1.baseball.api-sports.io'
+        },
         'Baseball Teams'
+      );
+    }
+    
+    // If we still don't have data, try team statistics for a popular team
+    if (!result.success || result.data.length === 0) {
+      result = await makeAPIRequest(
+        'https://v1.baseball.api-sports.io/teams/statistics',
+        { league: 1, season: trySeason, team: 5 }, // Boston Red Sox as example
+        { 
+          'x-rapidapi-key': API_KEY,
+          'x-rapidapi-host': 'v1.baseball.api-sports.io'
+        },
+        'Baseball Team Statistics'
       );
     }
     
@@ -699,14 +747,17 @@ async function fetchF1Data(season = '2024') {
 
 async function fetchFootballData(season = '2024') {
   // Try multiple seasons - European football seasons run differently
-  const seasonsToTry = [season, '2024', '2023', '2022'];
+  const seasonsToTry = [season, '2024', '2023', '2022', '2021', '2020', '2019'];
   
   for (const trySeason of seasonsToTry) {
     // Try standings first, then teams as fallback
     let result = await makeAPIRequest(
       'https://v3.football.api-sports.io/standings',
       { league: 39, season: trySeason }, // Premier League
-      { 'x-apisports-key': API_KEY },
+      { 
+        'x-rapidapi-key': API_KEY,
+        'x-rapidapi-host': 'v3.football.api-sports.io'
+      },
       'Football Standings'
     );
     
@@ -715,7 +766,10 @@ async function fetchFootballData(season = '2024') {
       result = await makeAPIRequest(
         'https://v3.football.api-sports.io/teams',
         { league: 39, season: trySeason },
-        { 'x-apisports-key': API_KEY },
+        { 
+          'x-rapidapi-key': API_KEY,
+          'x-rapidapi-host': 'v3.football.api-sports.io'
+        },
         'Football Teams'
       );
     }

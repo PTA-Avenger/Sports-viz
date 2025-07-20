@@ -14,17 +14,20 @@ async function fetchSportsData(sport, season = '2024') {
   switch (sport.toLowerCase()) {
     case 'baseball':
       url = `https://v1.baseball.api-sports.io/games`;
-      headers['x-apisports-key'] = apiKey;
+      headers['x-rapidapi-key'] = apiKey;
+      headers['x-rapidapi-host'] = 'v1.baseball.api-sports.io';
       break;
 
     case 'basketball':
       url = `https://v1.basketball.api-sports.io/games`;
-      headers['x-apisports-key'] = apiKey;
+      headers['x-rapidapi-key'] = apiKey;
+      headers['x-rapidapi-host'] = 'v1.basketball.api-sports.io';
       break;
 
     case 'football':
       url = `https://v3.football.api-sports.io/teams/statistics`;
-      headers['x-apisports-key'] = apiKey;
+      headers['x-rapidapi-key'] = apiKey;
+      headers['x-rapidapi-host'] = 'v3.football.api-sports.io';
       break;
 
     case 'f1':
@@ -50,23 +53,29 @@ async function fetchSportsData(sport, season = '2024') {
       params.league = 12;
     }
 
-    const response = await axios.get(url, { 
+    console.log(`Fetching ${sport} data for season ${season}`);
+    console.log(`URL: ${url}`);
+    console.log(`Params:`, params);
+
+    const response = await axios.get(url, {
+      params,
       headers,
-      params: sport.toLowerCase() === 'f1' ? {} : params,
       timeout: 10000
     });
 
-    // Handle F1 API response format
-    if (sport.toLowerCase() === 'f1') {
-      return response.data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings || [];
+    if (response.data && response.data.response) {
+      console.log(`Successfully fetched ${response.data.response.length} ${sport} records`);
+      return response.data.response;
     }
 
-    return response.data.response || response.data || [];
-  } catch (err) {
+    console.log(`No data found for ${sport} season ${season}`);
+    return [];
+
+  } catch (error) {
     console.error(`Error fetching ${sport} data:`, {
-      status: err.response?.status,
-      message: err.message,
-      data: err.response?.data
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
     });
     return [];
   }
