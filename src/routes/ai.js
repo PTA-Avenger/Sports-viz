@@ -61,12 +61,20 @@ router.use(checkGeminiKey);
 // Helper function for Gemini API calls with better error handling
 async function callGeminiAPI(prompt, data = null, maxLength = 12000) {
   try {
-    const contents = [{ parts: [{ text: prompt }] }];
+    // Build the user message content
+    let userContent = prompt;
     
     if (data) {
       const dataString = typeof data === 'string' ? data : JSON.stringify(data);
-      contents.push({ parts: [{ text: dataString.slice(0, maxLength) }] });
+      userContent += '\n\nData:\n' + dataString.slice(0, maxLength);
     }
+
+    const contents = [
+      {
+        role: 'user',
+        parts: [{ text: userContent }]
+      }
+    ];
 
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
