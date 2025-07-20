@@ -1,22 +1,102 @@
-// --- Chatbot Analyst Widget ---
+// --- Enhanced UI Functions ---
+function showSuccessMessage(message) {
+  const banner = document.getElementById('successBanner');
+  const messageEl = document.getElementById('successMessage');
+  if (banner && messageEl) {
+    messageEl.textContent = message;
+    banner.style.display = 'block';
+    setTimeout(() => {
+      banner.style.display = 'none';
+    }, 4000);
+  }
+  // Announce to screen readers
+  if (window.announceToScreenReader) {
+    window.announceToScreenReader(message);
+  }
+}
+
+function showErrorMessage(message) {
+  const banner = document.getElementById('errorBanner');
+  const messageEl = document.getElementById('errorMessage');
+  if (banner && messageEl) {
+    messageEl.textContent = message;
+    banner.style.display = 'block';
+    setTimeout(() => {
+      banner.style.display = 'none';
+    }, 6000);
+  }
+  // Announce to screen readers
+  if (window.announceToScreenReader) {
+    window.announceToScreenReader(`Error: ${message}`);
+  }
+}
+
+function showLoadingOverlay(show, message = 'Loading...') {
+  const overlay = document.getElementById('loadingOverlay');
+  const messageEl = document.getElementById('loadingMessage');
+  const progressBar = document.getElementById('loadingProgress');
+  
+  if (overlay) {
+    overlay.style.display = show ? 'flex' : 'none';
+    overlay.setAttribute('aria-hidden', !show);
+    
+    if (messageEl) messageEl.textContent = message;
+    
+    // Animate progress bar
+    if (show && progressBar) {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = progress + '%';
+        
+        if (!show || overlay.style.display === 'none') {
+          clearInterval(interval);
+          progressBar.style.width = '100%';
+          setTimeout(() => {
+            progressBar.style.width = '0%';
+          }, 200);
+        }
+      }, 200);
+    }
+  }
+}
+
+// --- Enhanced Chatbot Functions ---
 function appendChatMessage(text, sender = 'user') {
   const messages = document.getElementById('chatbotMessages');
   const div = document.createElement('div');
-  div.style.margin = '6px 0';
-  div.style.textAlign = sender === 'user' ? 'right' : 'left';
-  div.innerHTML = `<span style="display:inline-block;max-width:80%;padding:7px 12px;border-radius:16px;${sender === 'user' ? 'background:#3498db;color:#fff;' : 'background:#f3f3f3;color:#222;'}">${text}</span>`;
+  div.className = `message ${sender}`;
+  
+  const bubble = document.createElement('div');
+  bubble.className = 'message-bubble';
+  bubble.innerHTML = text;
+  
+  div.appendChild(bubble);
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
+  
+  // Track user interaction
+  if (window.sportsVizMetrics) {
+    window.sportsVizMetrics.trackUserInteraction();
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // ...existing code...
+  // Initialize UI components
   populateSeasonDropdown();
+  
+  // Set up event handlers for new UI elements
+  setupUIEventHandlers();
+  
   // Initial chart render
   const sport = document.getElementById('sportSelect')?.value;
   const seasonSelect = document.getElementById('seasonSelect');
   const seasons = Array.from(seasonSelect?.selectedOptions || []).map(o => o.value);
   createChart(sport, seasons);
+  
+  // Show success message for app initialization
+  showSuccessMessage('Sports Viz loaded successfully!');
 
   // Chart type and metric selectors
   const chartControls = document.createElement('div');
@@ -203,47 +283,19 @@ window.addEventListener('DOMContentLoaded', () => {
 
 const BACKEND_URL = 'https://sports-viz.onrender.com'; // Replace with actual Render URL
 
-// Show/hide loading spinner
-function showLoading(show) {
-  let spinner = document.getElementById('loadingSpinner');
-  if (!spinner) {
-    spinner = document.createElement('div');
-    spinner.id = 'loadingSpinner';
-    spinner.style.position = 'fixed';
-    spinner.style.top = '50%';
-    spinner.style.left = '50%';
-    spinner.style.transform = 'translate(-50%, -50%)';
-    spinner.style.zIndex = '1000';
-    spinner.innerHTML = '<div style="border:8px solid #f3f3f3;border-top:8px solid #3498db;border-radius:50%;width:60px;height:60px;animation:spin 1s linear infinite;"></div>';
-    document.body.appendChild(spinner);
-    const style = document.createElement('style');
-    style.innerHTML = '@keyframes spin {0% { transform: rotate(0deg);}100% { transform: rotate(360deg);}}';
-    document.head.appendChild(style);
+// Show/hide loading spinner (updated to use new overlay)
+function showLoading(show, message = 'Loading data...') {
+  showLoadingOverlay(show, message);
+  
+  // Track API call
+  if (show && window.sportsVizMetrics) {
+    window.sportsVizMetrics.trackApiCall();
   }
-  spinner.style.display = show ? 'block' : 'none';
 }
 
-// Show error banner
+// Show error banner (updated to use new error message system)
 function showError(msg) {
-  let banner = document.getElementById('errorBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'errorBanner';
-    banner.style.position = 'fixed';
-    banner.style.top = '0';
-    banner.style.left = '0';
-    banner.style.width = '100%';
-    banner.style.background = '#e74c3c';
-    banner.style.color = 'white';
-    banner.style.padding = '12px';
-    banner.style.textAlign = 'center';
-    banner.style.zIndex = '1001';
-    banner.style.fontWeight = 'bold';
-    document.body.appendChild(banner);
-  }
-  banner.textContent = msg;
-  banner.style.display = 'block';
-  setTimeout(() => { banner.style.display = 'none'; }, 5000);
+  showErrorMessage(msg);
 }
 
 async function fetchData(sport) {
@@ -405,34 +457,39 @@ function getCurrentYear() {
 
 function populateSeasonDropdown() {
   let seasonSelect = document.getElementById('seasonSelect');
-  if (!seasonSelect) {
+  const seasonControlGroup = document.getElementById('seasonControlGroup');
+  
+  if (!seasonSelect && seasonControlGroup) {
     seasonSelect = document.createElement('select');
     seasonSelect.id = 'seasonSelect';
     seasonSelect.multiple = true;
     seasonSelect.size = 4;
-    seasonSelect.style.marginLeft = '12px';
-    seasonSelect.style.verticalAlign = 'middle';
-    seasonSelect.style.width = '100px';
-    document.getElementById('sportSelect').after(seasonSelect);
+    seasonSelect.setAttribute('aria-label', 'Select seasons (Ctrl+Click to multi-select)');
+    seasonControlGroup.appendChild(seasonSelect);
+    
     // Add helper text
     let helper = document.getElementById('seasonHelper');
     if (!helper) {
-      helper = document.createElement('span');
+      helper = document.createElement('small');
       helper.id = 'seasonHelper';
-      helper.textContent = ' (Ctrl+Click to multi-select)';
-      helper.style.fontSize = '0.9em';
-      helper.style.color = '#888';
-      seasonSelect.after(helper);
+      helper.textContent = 'Ctrl+Click to select multiple seasons';
+      helper.style.color = 'var(--gray-500)';
+      helper.style.fontSize = 'var(--text-xs)';
+      helper.style.marginTop = 'var(--space-1)';
+      seasonControlGroup.appendChild(helper);
     }
   }
-  seasonSelect.innerHTML = '';
-  const current = getCurrentYear();
-  for (let y = current; y >= current - 5; y--) {
-    const opt = document.createElement('option');
-    opt.value = y;
-    opt.textContent = y;
-    if (y === current) opt.selected = true;
-    seasonSelect.appendChild(opt);
+  
+  if (seasonSelect) {
+    seasonSelect.innerHTML = '';
+    const current = getCurrentYear();
+    for (let y = current; y >= current - 5; y--) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === current) opt.selected = true;
+      seasonSelect.appendChild(opt);
+    }
   }
 }
 
@@ -1386,5 +1443,225 @@ window.addEventListener('DOMContentLoaded', () => {
     btn.style.cursor = 'pointer';
     btn.onclick = showVisualizationExplorer;
     document.body.appendChild(btn);
+  }
+});
+
+// Setup UI event handlers for enhanced functionality
+function setupUIEventHandlers() {
+  // Error banner close button
+  const closeErrorBtn = document.getElementById('closeErrorBanner');
+  if (closeErrorBtn) {
+    closeErrorBtn.addEventListener('click', () => {
+      document.getElementById('errorBanner').style.display = 'none';
+    });
+  }
+  
+  // Success banner close button
+  const closeSuccessBtn = document.getElementById('closeSuccessBanner');
+  if (closeSuccessBtn) {
+    closeSuccessBtn.addEventListener('click', () => {
+      document.getElementById('successBanner').style.display = 'none';
+    });
+  }
+  
+  // Chatbot minimize button
+  const minimizeChatbot = document.getElementById('minimizeChatbot');
+  const chatbotMessages = document.getElementById('chatbotMessages');
+  const chatbotForm = document.getElementById('chatbotForm');
+  if (minimizeChatbot && chatbotMessages && chatbotForm) {
+    minimizeChatbot.addEventListener('click', () => {
+      const isMinimized = chatbotMessages.style.display === 'none';
+      chatbotMessages.style.display = isMinimized ? 'block' : 'none';
+      chatbotForm.style.display = isMinimized ? 'flex' : 'none';
+      minimizeChatbot.innerHTML = isMinimized ? '<span>−</span>' : '<span>+</span>';
+      minimizeChatbot.setAttribute('aria-label', isMinimized ? 'Minimize chatbot' : 'Expand chatbot');
+    });
+  }
+  
+  // Quick filter buttons
+  const favoriteTeamsBtn = document.getElementById('favoriteTeamsBtn');
+  const topPerformersBtn = document.getElementById('topPerformersBtn');
+  
+  if (favoriteTeamsBtn) {
+    favoriteTeamsBtn.addEventListener('click', () => {
+      favoriteTeamsBtn.classList.toggle('active');
+      // TODO: Implement favorite teams filtering
+      showSuccessMessage('Favorite teams filter toggled');
+      if (window.sportsVizMetrics) {
+        window.sportsVizMetrics.trackUserInteraction();
+      }
+    });
+  }
+  
+  if (topPerformersBtn) {
+    topPerformersBtn.addEventListener('click', () => {
+      topPerformersBtn.classList.toggle('active');
+      // TODO: Implement top performers filtering
+      showSuccessMessage('Top performers filter toggled');
+      if (window.sportsVizMetrics) {
+        window.sportsVizMetrics.trackUserInteraction();
+      }
+    });
+  }
+  
+  // Chart retry button
+  const retryChartBtn = document.getElementById('retryChartBtn');
+  if (retryChartBtn) {
+    retryChartBtn.addEventListener('click', () => {
+      const sport = document.getElementById('sportSelect')?.value;
+      const seasonSelect = document.getElementById('seasonSelect');
+      const seasons = Array.from(seasonSelect?.selectedOptions || []).map(o => o.value);
+      createChart(sport, seasons);
+    });
+  }
+  
+  // Performance dashboard toggle (Ctrl+P)
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'p') {
+      e.preventDefault();
+      const dashboard = document.getElementById('performanceDashboard');
+      if (dashboard) {
+        const isVisible = dashboard.style.display !== 'none';
+        dashboard.style.display = isVisible ? 'none' : 'block';
+        showSuccessMessage(isVisible ? 'Performance dashboard hidden' : 'Performance dashboard shown');
+      }
+    }
+  });
+}
+
+// Enhanced chart creation with better error handling and metrics tracking
+async function enhancedCreateChart(sport, seasons) {
+  try {
+    showLoading(true, `Loading ${sport} data for ${seasons.join(', ')}...`);
+    
+    // Track chart render attempt
+    if (window.sportsVizMetrics) {
+      window.sportsVizMetrics.trackChartRender();
+    }
+    
+    // Hide error state and show loading state
+    const errorState = document.getElementById('chartErrorState');
+    const loadingState = document.getElementById('chartLoadingState');
+    const chartCanvas = document.getElementById('myChart');
+    
+    if (errorState) errorState.style.display = 'none';
+    if (loadingState) loadingState.style.display = 'block';
+    if (chartCanvas) chartCanvas.style.display = 'none';
+    
+    // Call original createChart function
+    await createChart(sport, seasons);
+    
+    // Show chart and hide loading state on success
+    if (loadingState) loadingState.style.display = 'none';
+    if (chartCanvas) chartCanvas.style.display = 'block';
+    
+    showSuccessMessage(`${sport} chart loaded successfully!`);
+    
+    // Announce to screen readers
+    if (window.announceToScreenReader) {
+      window.announceToScreenReader(`Chart updated to show ${sport} data for ${seasons.join(' and ')}`);
+    }
+    
+  } catch (error) {
+    console.error('Chart creation failed:', error);
+    
+    // Show error state
+    const errorState = document.getElementById('chartErrorState');
+    const loadingState = document.getElementById('chartLoadingState');
+    const chartCanvas = document.getElementById('myChart');
+    
+    if (loadingState) loadingState.style.display = 'none';
+    if (chartCanvas) chartCanvas.style.display = 'none';
+    if (errorState) errorState.style.display = 'block';
+    
+    showError(`Failed to load ${sport} chart: ${error.message}`);
+  } finally {
+    showLoading(false);
+  }
+}
+
+// Theme switching functionality
+function switchTheme(sportTheme) {
+  const body = document.body;
+  const themes = ['sport-baseball', 'sport-basketball', 'sport-football', 'sport-f1'];
+  
+  // Remove existing sport themes
+  themes.forEach(theme => body.classList.remove(theme));
+  
+  // Add new sport theme
+  if (sportTheme) {
+    body.classList.add(`sport-${sportTheme}`);
+  }
+  
+  // Update CSS custom properties for dynamic theming
+  const root = document.documentElement;
+  const sportColors = {
+    baseball: '#dc2626',
+    basketball: '#f97316', 
+    football: '#0d9488',
+    f1: '#eab308'
+  };
+  
+  if (sportColors[sportTheme]) {
+    root.style.setProperty('--sport-color', sportColors[sportTheme]);
+  }
+}
+
+// Accessibility improvements
+function improveAccessibility() {
+  // Add ARIA labels to dynamically created elements
+  const chartCanvas = document.getElementById('myChart');
+  if (chartCanvas && window.chartInstance) {
+    const sport = document.getElementById('sportSelect')?.value || 'sports';
+    chartCanvas.setAttribute('aria-label', `${sport} data visualization chart`);
+  }
+  
+  // Ensure all interactive elements are keyboard accessible
+  const interactiveElements = document.querySelectorAll('button, select, input, [role="button"]');
+  interactiveElements.forEach(el => {
+    if (!el.hasAttribute('tabindex')) {
+      el.setAttribute('tabindex', '0');
+    }
+  });
+  
+  // Add focus indicators for keyboard navigation
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .btn-secondary.active {
+      background: var(--primary-blue) !important;
+      color: white !important;
+      border-color: var(--primary-blue-dark) !important;
+    }
+    
+    .filter-btn.active::before {
+      content: "✓ ";
+    }
+    
+    /* Enhanced focus indicators */
+    button:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--primary-blue);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.1);
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Initialize enhanced functionality
+document.addEventListener('DOMContentLoaded', () => {
+  // Apply accessibility improvements
+  improveAccessibility();
+  
+  // Set up theme switching based on sport selection
+  const sportSelect = document.getElementById('sportSelect');
+  if (sportSelect) {
+    sportSelect.addEventListener('change', (e) => {
+      switchTheme(e.target.value);
+    });
+    
+    // Initialize with current sport theme
+    switchTheme(sportSelect.value);
   }
 });

@@ -2,35 +2,535 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sports Viz</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Advanced sports data visualization and analytics platform with AI-powered insights">
+  <meta name="keywords" content="sports analytics, data visualization, baseball, basketball, football, F1, statistics">
+  <title>Sports Viz - Advanced Analytics Platform</title>
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/chart.js" as="script">
+  <link rel="preload" href="style.css" as="style">
+  
+  <!-- External dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Favicon and app icons -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+  
+  <!-- Theme color for mobile browsers -->
+  <meta name="theme-color" content="#2563eb">
 </head>
 <body>
-  <h1>Sports Data Visualization</h1>
-  <div id="controlsBar" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;background:#f8fafd;border-radius:10px;box-shadow:0 1px 8px #0001;padding:12px 18px 8px 18px;margin:18px auto 10px auto;max-width:900px;font-size:1em;">
-    <select id="sportSelect">
-      <option value="baseball">Baseball</option>
-      <option value="basketball">Basketball</option>
-      <option value="football">Football</option>
-      <option value="f1">F1</option>
-    </select>
-    <!-- The season dropdown will be injected here by script.js -->
-  </div>
-  <div style="display:flex;gap:24px;align-items:flex-start;justify-content:center;">
-    <canvas id="myChart"></canvas>
-    <div id="recommendSidebar" style="min-width:220px;max-width:260px;display:none;"></div>
-  </div>
-  <div id="insightsPanel" style="max-width:700px;margin:24px auto 0 auto;padding:16px;background:#f8f8ff;border-radius:8px;box-shadow:0 2px 8px #0001;display:none;"></div>
+  <!-- Skip to main content for accessibility -->
+  <a href="#main-content" class="skip-link" style="position: absolute; top: -40px; left: 6px; background: var(--primary-blue); color: white; padding: 8px; text-decoration: none; border-radius: 4px; z-index: 9999;">Skip to main content</a>
+  
+  <!-- Main application container -->
+  <div class="app-container">
+    <!-- Header -->
+    <header role="banner">
+      <h1 id="main-title">
+        <span class="title-icon">📊</span>
+        Sports Data Visualization
+        <span class="title-subtitle">Advanced Analytics Platform</span>
+      </h1>
+    </header>
 
-  <div id="chatbotWidget" style="position:fixed;bottom:24px;right:24px;z-index:2000;width:340px;max-width:90vw;">
-    <div style="background:#222;color:#fff;padding:10px 16px;border-radius:8px 8px 0 0;font-weight:bold;">Ask the Analyst</div>
-    <div id="chatbotMessages" style="background:#fff;height:180px;overflow-y:auto;padding:10px 8px 8px 8px;border:1px solid #ddd;border-top:none;"></div>
-    <form id="chatbotForm" style="display:flex;border:1px solid #ddd;border-top:none;background:#fafbfc;border-radius:0 0 8px 8px;">
-      <input id="chatbotInput" type="text" placeholder="Ask a question..." style="flex:1;padding:8px;border:none;border-radius:0 0 0 8px;outline:none;" />
-      <button type="submit" style="background:#3498db;color:#fff;border:none;padding:0 18px;border-radius:0 0 8px 0;cursor:pointer;font-weight:bold;">Send</button>
-    </form>
+    <!-- Main content -->
+    <main id="main-content" role="main">
+      <!-- Controls section -->
+      <section class="controls-section" aria-label="Chart controls and filters">
+        <div id="controlsBar" role="group" aria-label="Sport and season selection">
+          <!-- Sport selector -->
+          <div class="control-group">
+            <label for="sportSelect" class="control-label">Sport</label>
+            <select id="sportSelect" aria-label="Select sport" class="sport-select">
+              <option value="baseball">⚾ Baseball</option>
+              <option value="basketball">🏀 Basketball</option>
+              <option value="football">⚽ Football</option>
+              <option value="f1">🏎️ Formula 1</option>
+            </select>
+          </div>
+          
+          <!-- Season selector (will be injected by script.js) -->
+          <div class="control-group" id="seasonControlGroup">
+            <label for="seasonSelect" class="control-label">Season</label>
+            <!-- Season dropdown will be injected here by script.js -->
+          </div>
+          
+          <!-- Quick filters -->
+          <div class="control-group">
+            <button type="button" class="btn-secondary filter-btn" id="favoriteTeamsBtn" title="Show favorite teams only">
+              ⭐ Favorites
+            </button>
+            <button type="button" class="btn-secondary filter-btn" id="topPerformersBtn" title="Show top performers only">
+              🏆 Top Performers
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Visualization section -->
+      <section class="visualization-section" aria-label="Data visualization and insights">
+        <!-- Chart container -->
+        <div id="chartContainer" class="chart-wrapper">
+          <div class="chart-main">
+            <!-- Chart controls will be injected here by script.js -->
+            <canvas id="myChart" role="img" aria-label="Sports data visualization chart"></canvas>
+            
+            <!-- Chart loading state -->
+            <div id="chartLoadingState" class="loading-state" style="display: none;">
+              <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Loading chart data...</p>
+              </div>
+            </div>
+            
+            <!-- Chart error state -->
+            <div id="chartErrorState" class="error-state" style="display: none;">
+              <div class="error-content">
+                <span class="error-icon">⚠️</span>
+                <h3>Unable to load chart</h3>
+                <p>Please try refreshing the page or selecting a different sport.</p>
+                <button type="button" class="btn-primary" id="retryChartBtn">Retry</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Recommendations sidebar -->
+          <aside id="recommendSidebar" class="recommendations-sidebar" role="complementary" aria-label="Recommended teams" style="display: none;">
+            <h3>
+              <span class="sidebar-icon">🎯</span>
+              Recommended for You
+            </h3>
+            <div id="recommendationsContent" class="recommendations-content">
+              <!-- Recommendations will be populated by JavaScript -->
+            </div>
+          </aside>
+        </div>
+        
+        <!-- AI Insights panel -->
+        <aside id="insightsPanel" class="insights-panel" role="complementary" aria-label="AI-generated insights" style="display: none;">
+          <h3>
+            <span class="insights-icon">🤖</span>
+            AI Insights
+          </h3>
+          <div id="insightsContent" class="insights-content">
+            <!-- AI insights will be populated by JavaScript -->
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <!-- Performance metrics dashboard (hidden by default) -->
+    <section id="performanceDashboard" class="performance-dashboard" style="display: none;" aria-label="Performance metrics">
+      <h2>Performance Metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <h4>Average Load Time</h4>
+          <span id="avgLoadTime" class="metric-value">--</span>
+        </div>
+        <div class="metric-card">
+          <h4>Charts Rendered</h4>
+          <span id="chartsRendered" class="metric-value">0</span>
+        </div>
+        <div class="metric-card">
+          <h4>API Calls</h4>
+          <span id="apiCalls" class="metric-value">0</span>
+        </div>
+        <div class="metric-card">
+          <h4>User Interactions</h4>
+          <span id="userInteractions" class="metric-value">0</span>
+        </div>
+      </div>
+    </section>
   </div>
+
+  <!-- Chatbot widget -->
+  <aside id="chatbotWidget" class="chatbot-widget" role="complementary" aria-label="AI analyst chatbot">
+    <div class="chatbot-header">
+      <span class="chatbot-title">Ask the AI Analyst</span>
+      <button type="button" class="chatbot-minimize" id="minimizeChatbot" aria-label="Minimize chatbot" title="Minimize">
+        <span>−</span>
+      </button>
+    </div>
+    <div id="chatbotMessages" class="chatbot-messages" aria-live="polite" aria-label="Chat messages">
+      <!-- Welcome message -->
+      <div class="message bot">
+        <div class="message-bubble">
+          👋 Hi! I'm your AI sports analyst. Ask me anything about the data you're viewing!
+        </div>
+      </div>
+    </div>
+    <form id="chatbotForm" class="chatbot-form">
+      <label for="chatbotInput" class="sr-only">Ask a question</label>
+      <input 
+        id="chatbotInput" 
+        type="text" 
+        placeholder="Ask about trends, comparisons, predictions..." 
+        aria-label="Type your question here"
+        autocomplete="off"
+        maxlength="500"
+      />
+      <button type="submit" class="chatbot-send-btn" aria-label="Send message">
+        <span class="send-icon">📤</span>
+        Send
+      </button>
+    </form>
+    <div class="chatbot-status" id="chatbotStatus" aria-live="polite"></div>
+  </aside>
+
+  <!-- Visualization Explorer Button -->
+  <button 
+    type="button" 
+    id="vizExplorerBtn" 
+    class="viz-explorer-btn" 
+    aria-label="Open visualization explorer"
+    title="Explore different chart types and visualization options"
+  >
+    <span class="explorer-icon">🔍</span>
+    Visualization Explorer
+  </button>
+
+  <!-- Accessibility announcements -->
+  <div id="announcements" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay" style="display: none;" aria-hidden="true">
+    <div class="loading-content">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+      </div>
+      <h3>Loading Sports Data</h3>
+      <p id="loadingMessage">Fetching the latest statistics...</p>
+      <div class="loading-progress">
+        <div class="progress-bar" id="loadingProgress"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error banner -->
+  <div id="errorBanner" class="error-banner" style="display: none;" role="alert" aria-live="assertive">
+    <div class="error-content">
+      <span class="error-icon">⚠️</span>
+      <span id="errorMessage">An error occurred</span>
+      <button type="button" class="error-close" id="closeErrorBanner" aria-label="Close error message">×</button>
+    </div>
+  </div>
+
+  <!-- Success banner -->
+  <div id="successBanner" class="success-banner" style="display: none;" role="status" aria-live="polite">
+    <div class="success-content">
+      <span class="success-icon">✅</span>
+      <span id="successMessage">Operation completed successfully</span>
+      <button type="button" class="success-close" id="closeSuccessBanner" aria-label="Close success message">×</button>
+    </div>
+  </div>
+
+  <!-- Keyboard shortcuts help -->
+  <div id="keyboardShortcuts" class="keyboard-shortcuts" style="display: none;">
+    <h3>Keyboard Shortcuts</h3>
+    <ul>
+      <li><kbd>Ctrl</kbd> + <kbd>1-4</kbd> - Select sport</li>
+      <li><kbd>Ctrl</kbd> + <kbd>E</kbd> - Open visualization explorer</li>
+      <li><kbd>Ctrl</kbd> + <kbd>C</kbd> - Focus chatbot input</li>
+      <li><kbd>Esc</kbd> - Close modals/panels</li>
+      <li><kbd>?</kbd> - Show/hide this help</li>
+    </ul>
+  </div>
+
+  <!-- Screen reader only styles -->
+  <style>
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    
+    .skip-link:focus {
+      top: 6px;
+    }
+    
+    .title-subtitle {
+      display: block;
+      font-size: var(--text-lg);
+      font-weight: 400;
+      color: var(--gray-600);
+      margin-top: var(--space-2);
+    }
+    
+    .control-label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: var(--space-1);
+    }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+    
+    .filter-btn {
+      font-size: var(--text-sm);
+      padding: var(--space-2) var(--space-3);
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .loading-content {
+      text-align: center;
+      max-width: 400px;
+      padding: var(--space-8);
+    }
+    
+    .loading-progress {
+      width: 100%;
+      height: 4px;
+      background: var(--gray-200);
+      border-radius: var(--rounded-full);
+      margin-top: var(--space-4);
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-blue), var(--accent-purple));
+      border-radius: var(--rounded-full);
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    
+    .error-banner, .success-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 9998;
+      padding: var(--space-4);
+      text-align: center;
+      font-weight: 600;
+      animation: slideDown 0.3s ease-out;
+    }
+    
+    .error-banner {
+      background: linear-gradient(135deg, var(--error) 0%, #dc2626 100%);
+      color: white;
+    }
+    
+    .success-banner {
+      background: linear-gradient(135deg, var(--success) 0%, var(--secondary-green) 100%);
+      color: white;
+    }
+    
+    .error-content, .success-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .error-close, .success-close {
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: var(--text-xl);
+      cursor: pointer;
+      padding: var(--space-1);
+      margin-left: var(--space-4);
+    }
+    
+    .chatbot-minimize {
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: var(--text-lg);
+      cursor: pointer;
+      padding: var(--space-1);
+      margin-left: auto;
+    }
+    
+    .keyboard-shortcuts {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: var(--rounded-xl);
+      box-shadow: var(--shadow-xl);
+      padding: var(--space-6);
+      z-index: 9997;
+      border: 1px solid var(--gray-200);
+    }
+    
+    .keyboard-shortcuts kbd {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--rounded);
+      padding: var(--space-1) var(--space-2);
+      font-size: var(--text-xs);
+      font-family: var(--font-family-mono);
+    }
+    
+    .performance-dashboard {
+      margin-top: var(--space-8);
+      padding: var(--space-6);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: var(--rounded-xl);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      margin-top: var(--space-4);
+    }
+    
+    .metric-card {
+      background: white;
+      padding: var(--space-4);
+      border-radius: var(--rounded-lg);
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+      border: 1px solid var(--gray-200);
+    }
+    
+    .metric-value {
+      display: block;
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin-top: var(--space-2);
+    }
+  </style>
+
+  <!-- Main application script -->
   <script src="script.js"></script>
+  
+  <!-- Analytics and performance monitoring -->
+  <script>
+    // Simple performance monitoring
+    window.sportsVizMetrics = {
+      startTime: performance.now(),
+      apiCalls: 0,
+      chartsRendered: 0,
+      userInteractions: 0,
+      
+      trackApiCall() {
+        this.apiCalls++;
+        this.updateMetrics();
+      },
+      
+      trackChartRender() {
+        this.chartsRendered++;
+        this.updateMetrics();
+      },
+      
+      trackUserInteraction() {
+        this.userInteractions++;
+        this.updateMetrics();
+      },
+      
+      updateMetrics() {
+        const avgLoadTime = document.getElementById('avgLoadTime');
+        const chartsRendered = document.getElementById('chartsRendered');
+        const apiCalls = document.getElementById('apiCalls');
+        const userInteractions = document.getElementById('userInteractions');
+        
+        if (avgLoadTime) avgLoadTime.textContent = Math.round(performance.now() - this.startTime) + 'ms';
+        if (chartsRendered) chartsRendered.textContent = this.chartsRendered;
+        if (apiCalls) apiCalls.textContent = this.apiCalls;
+        if (userInteractions) userInteractions.textContent = this.userInteractions;
+      }
+    };
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Show keyboard shortcuts help
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        const help = document.getElementById('keyboardShortcuts');
+        help.style.display = help.style.display === 'none' ? 'block' : 'none';
+        e.preventDefault();
+      }
+      
+      // Close modals with Escape
+      if (e.key === 'Escape') {
+        const modals = document.querySelectorAll('.modal, #keyboardShortcuts, #vizExplorerPanel');
+        modals.forEach(modal => {
+          if (modal.style.display !== 'none') {
+            modal.style.display = 'none';
+          }
+        });
+      }
+      
+      // Ctrl+C to focus chatbot
+      if (e.ctrlKey && e.key === 'c') {
+        const chatInput = document.getElementById('chatbotInput');
+        if (chatInput) {
+          chatInput.focus();
+          e.preventDefault();
+        }
+      }
+      
+      // Ctrl+E for visualization explorer
+      if (e.ctrlKey && e.key === 'e') {
+        const vizBtn = document.getElementById('vizExplorerBtn');
+        if (vizBtn) {
+          vizBtn.click();
+          e.preventDefault();
+        }
+      }
+      
+      // Ctrl+1-4 for sport selection
+      if (e.ctrlKey && ['1', '2', '3', '4'].includes(e.key)) {
+        const sportSelect = document.getElementById('sportSelect');
+        if (sportSelect) {
+          const index = parseInt(e.key) - 1;
+          if (sportSelect.options[index]) {
+            sportSelect.selectedIndex = index;
+            sportSelect.dispatchEvent(new Event('change'));
+          }
+        }
+        e.preventDefault();
+      }
+    });
+    
+    // Announce important updates to screen readers
+    function announceToScreenReader(message) {
+      const announcements = document.getElementById('announcements');
+      if (announcements) {
+        announcements.textContent = message;
+        setTimeout(() => {
+          announcements.textContent = '';
+        }, 1000);
+      }
+    }
+    
+    // Make announce function globally available
+    window.announceToScreenReader = announceToScreenReader;
+  </script>
 </body>
 </html>
