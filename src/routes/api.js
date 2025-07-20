@@ -152,57 +152,93 @@ async function makeAPIRequest(url, params, headers, sport = 'unknown') {
 
 // Unified data fetchers with consistent API endpoints and mock fallbacks
 async function fetchBasketballData(season = '2024') {
-  // Basketball API domain issue - using correct API-Sports domain
-  let result = await makeAPIRequest(
-    'https://api-basketball.api-sports.io/standings',
-    { league: 12, season }, // NBA league
-    { 'x-apisports-key': API_KEY },
-    'Basketball Standings'
-  );
+  // Fixed Basketball API domain - using correct API-Sports domain
+  const seasonsToTry = [season, '2024', '2023', '2022', '2021'];
   
-  if (!result.success || result.data.length === 0) {
-    // Fallback to teams
-    result = await makeAPIRequest(
-      'https://api-basketball.api-sports.io/teams',
-      { league: 12, season },
+  for (const trySeason of seasonsToTry) {
+    // Try standings first, then teams as fallback
+    let result = await makeAPIRequest(
+      'https://v3.basketball.api-sports.io/standings',
+      { league: 12, season: trySeason }, // NBA league
       { 'x-apisports-key': API_KEY },
-      'Basketball Teams'
+      'Basketball Standings'
     );
+    
+    if (!result.success || result.data.length === 0) {
+      // Fallback to teams
+      result = await makeAPIRequest(
+        'https://v3.basketball.api-sports.io/teams',
+        { league: 12, season: trySeason },
+        { 'x-apisports-key': API_KEY },
+        'Basketball Teams'
+      );
+    }
+    
+    if (result.success && result.data.length > 0) {
+      console.log(`Basketball data found for season ${trySeason}`);
+      return result.data;
+    }
   }
   
-  // If still no data, return mock data for demonstration
-  if (!result.success || result.data.length === 0) {
-    console.log('Basketball APIs failed, returning mock data');
-    return [
-      {
-        team: { name: "Los Angeles Lakers", logo: "https://via.placeholder.com/50" },
-        ppg: 112.5, rpg: 45.2, apg: 27.8, pie: 0.52, wins: 45, losses: 37, rank: 7
-      },
-      {
-        team: { name: "Boston Celtics", logo: "https://via.placeholder.com/50" },
-        ppg: 118.2, rpg: 46.8, apg: 26.4, pie: 0.58, wins: 57, losses: 25, rank: 2
-      },
-      {
-        team: { name: "Golden State Warriors", logo: "https://via.placeholder.com/50" },
-        ppg: 115.1, rpg: 43.9, apg: 29.2, pie: 0.54, wins: 44, losses: 38, rank: 6
-      },
-      {
-        team: { name: "Miami Heat", logo: "https://via.placeholder.com/50" },
-        ppg: 108.7, rpg: 42.1, apg: 25.9, pie: 0.49, wins: 44, losses: 38, rank: 8
-      },
-      {
-        team: { name: "Phoenix Suns", logo: "https://via.placeholder.com/50" },
-        ppg: 114.8, rpg: 44.5, apg: 28.1, pie: 0.55, wins: 45, losses: 37, rank: 4
-      }
-    ];
-  }
-  
-  return result.data;
+  // If all APIs fail, return mock data for demonstration
+  console.log('Basketball APIs failed, returning mock data');
+  return [
+    {
+      team: { name: "Lakers", city: "Los Angeles" },
+      ppg: 118.2,
+      rpg: 44.8,
+      apg: 28.1,
+      pie: 0.567,
+      wins: 47,
+      losses: 35,
+      rank: 1
+    },
+    {
+      team: { name: "Warriors", city: "Golden State" },
+      ppg: 115.9,
+      rpg: 43.2,
+      apg: 29.8,
+      pie: 0.534,
+      wins: 44,
+      losses: 38,
+      rank: 2
+    },
+    {
+      team: { name: "Celtics", city: "Boston" },
+      ppg: 120.6,
+      rpg: 46.3,
+      apg: 26.9,
+      pie: 0.598,
+      wins: 57,
+      losses: 25,
+      rank: 3
+    },
+    {
+      team: { name: "Nuggets", city: "Denver" },
+      ppg: 114.7,
+      rpg: 44.1,
+      apg: 27.5,
+      pie: 0.545,
+      wins: 50,
+      losses: 32,
+      rank: 4
+    },
+    {
+      team: { name: "Heat", city: "Miami" },
+      ppg: 110.5,
+      rpg: 42.9,
+      apg: 25.3,
+      pie: 0.512,
+      wins: 44,
+      losses: 38,
+      rank: 5
+    }
+  ];
 }
 
 async function fetchBaseballData(season = '2024') {
-  // Try current season first, then fallback to known good seasons
-  const seasonsToTry = [season, '2024', '2023'];
+  // Try multiple seasons starting with the requested one
+  const seasonsToTry = [season, '2024', '2023', '2022'];
   
   for (const trySeason of seasonsToTry) {
     // Try standings first, then teams as fallback
@@ -229,145 +265,270 @@ async function fetchBaseballData(season = '2024') {
     }
   }
   
-  // If all seasons fail, return mock data
+  // If all APIs fail, return mock data for demonstration
   console.log('Baseball APIs failed, returning mock data');
   return [
     {
-      team: { name: "New York Yankees", logo: "https://via.placeholder.com/50" },
-      batting: { ops: 0.789, avg: 0.267, hr: 254, runs: 795, rbi: 756 },
-      pitching: { era: 3.89, wins: 99 },
-      wins: 99, losses: 63, rank: 1
+      team: { name: "Yankees", city: "New York" },
+      batting: { 
+        ops: 0.789, 
+        avg: 0.267, 
+        hr: 254, 
+        runs: 795, 
+        rbi: 756 
+      },
+      pitching: { 
+        era: 3.89, 
+        wins: 99,
+        strikeouts: 1543,
+        whip: 1.28
+      },
+      wins: 99,
+      losses: 63,
+      rank: 1
     },
     {
-      team: { name: "Los Angeles Dodgers", logo: "https://via.placeholder.com/50" },
-      batting: { ops: 0.823, avg: 0.279, hr: 249, runs: 847, rbi: 812 },
-      pitching: { era: 3.64, wins: 100 },
-      wins: 100, losses: 62, rank: 1
+      team: { name: "Dodgers", city: "Los Angeles" },
+      batting: { 
+        ops: 0.751, 
+        avg: 0.258, 
+        hr: 233, 
+        runs: 758, 
+        rbi: 721 
+      },
+      pitching: { 
+        era: 4.02, 
+        wins: 100,
+        strikeouts: 1456,
+        whip: 1.31
+      },
+      wins: 100,
+      losses: 62,
+      rank: 2
     },
     {
-      team: { name: "Houston Astros", logo: "https://via.placeholder.com/50" },
-      batting: { ops: 0.756, avg: 0.255, hr: 214, runs: 729, rbi: 698 },
-      pitching: { era: 4.12, wins: 90 },
-      wins: 90, losses: 72, rank: 2
+      team: { name: "Braves", city: "Atlanta" },
+      batting: { 
+        ops: 0.778, 
+        avg: 0.271, 
+        hr: 307, 
+        runs: 947, 
+        rbi: 908 
+      },
+      pitching: { 
+        era: 4.64, 
+        wins: 104,
+        strikeouts: 1552,
+        whip: 1.35
+      },
+      wins: 104,
+      losses: 58,
+      rank: 3
     },
     {
-      team: { name: "Atlanta Braves", logo: "https://via.placeholder.com/50" },
-      batting: { ops: 0.834, avg: 0.271, hr: 307, runs: 947, rbi: 901 },
-      pitching: { era: 3.45, wins: 104 },
-      wins: 104, losses: 58, rank: 1
+      team: { name: "Astros", city: "Houston" },
+      batting: { 
+        ops: 0.765, 
+        avg: 0.263, 
+        hr: 214, 
+        runs: 794, 
+        rbi: 763 
+      },
+      pitching: { 
+        era: 3.72, 
+        wins: 90,
+        strikeouts: 1434,
+        whip: 1.25
+      },
+      wins: 90,
+      losses: 72,
+      rank: 4
     },
     {
-      team: { name: "San Diego Padres", logo: "https://via.placeholder.com/50" },
-      batting: { ops: 0.721, avg: 0.248, hr: 192, runs: 705, rbi: 672 },
-      pitching: { era: 4.28, wins: 89 },
-      wins: 89, losses: 73, rank: 4
+      team: { name: "Rangers", city: "Texas" },
+      batting: { 
+        ops: 0.748, 
+        avg: 0.267, 
+        hr: 230, 
+        runs: 808, 
+        rbi: 773 
+      },
+      pitching: { 
+        era: 4.22, 
+        wins: 90,
+        strikeouts: 1387,
+        whip: 1.33
+      },
+      wins: 90,
+      losses: 72,
+      rank: 5
     }
   ];
 }
 
 async function fetchF1Data(season = '2024') {
-  try {
-    // Try multiple F1 API sources
-    const urls = [
-      `http://ergast.com/api/f1/${season}/constructorStandings.json`, // HTTP instead of HTTPS
-      `https://api.openf1.org/v1/constructors?session_key=latest`, // Alternative F1 API
-    ];
-    
-    for (const url of urls) {
-      try {
-        console.log(`Trying F1 API: ${url}`);
-        
-        const response = await axios.get(url, {
-          timeout: 10000,
-          headers: {
-            'User-Agent': 'Sports-Viz/1.0'
-          }
-        });
-        
-        console.log('F1 API response received:', {
-          url,
-          status: response.status,
-          dataKeys: Object.keys(response.data || {})
-        });
-        
-        // Handle Ergast API format
-        if (response.data?.MRData) {
-          const standings = response.data.MRData.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings || [];
-          if (standings.length > 0) {
-            console.log(`F1 Ergast data found: ${standings.length} constructors`);
-            return standings;
-          }
-        }
-        
-        // Handle OpenF1 API format
-        if (Array.isArray(response.data)) {
-          console.log(`F1 OpenF1 data found: ${response.data.length} items`);
-          return response.data;
-        }
-        
-      } catch (apiError) {
-        console.log(`F1 API ${url} failed:`, apiError.message);
-        continue; // Try next API
-      }
+  const f1APIs = [
+    // Try Ergast API first (most reliable when working)
+    {
+      url: `http://ergast.com/api/f1/${season}/constructorStandings.json`,
+      name: 'Ergast Constructor Standings'
+    },
+    // Try alternative season if current fails
+    {
+      url: `http://ergast.com/api/f1/2024/constructorStandings.json`,
+      name: 'Ergast 2024 Constructor Standings'
+    },
+    {
+      url: `http://ergast.com/api/f1/2023/constructorStandings.json`,
+      name: 'Ergast 2023 Constructor Standings'
+    },
+    // OpenF1 API as backup
+    {
+      url: 'https://api.openf1.org/v1/constructors?session_key=latest',
+      name: 'OpenF1 Constructors'
     }
-    
-    // If all APIs fail, return mock data for demonstration
-    console.log('All F1 APIs failed, returning mock data');
-    return [
-      {
-        position: "1",
-        constructorId: "red_bull",
-        Constructor: {
-          constructorId: "red_bull",
-          name: "Red Bull Racing",
-          nationality: "Austrian"
-        },
-        points: 860,
-        wins: 21,
-        lap_times_avg: 78.234,
-        top_speed: 347.5
-      },
-      {
-        position: "2",
-        constructorId: "mercedes",
-        Constructor: {
-          constructorId: "mercedes",
-          name: "Mercedes",
-          nationality: "German"
-        },
-        points: 409,
-        wins: 8,
-        lap_times_avg: 78.891,
-        top_speed: 344.2
-      },
-      {
-        position: "3",
-        constructorId: "ferrari",
-        Constructor: {
-          constructorId: "ferrari",
-          name: "Ferrari",
-          nationality: "Italian"
-        },
-        points: 406,
-        wins: 5,
-        lap_times_avg: 79.123,
-        top_speed: 342.8
+  ];
+
+  for (const api of f1APIs) {
+    try {
+      console.log(`Trying F1 API: ${api.url}`);
+      
+      const response = await axios.get(api.url, { 
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'Sports-Viz-App/1.0'
+        }
+      });
+      
+      console.log(`F1 API response received: {
+        url: '${api.url}',
+        status: ${response.status},
+        dataKeys: ${Object.keys(response.data || {})}
+      }`);
+
+      let processedData = [];
+      
+      // Process Ergast API response
+      if (api.name.includes('Ergast') && response.data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings) {
+        const standings = response.data.MRData.StandingsTable.StandingsLists[0].ConstructorStandings;
+        processedData = standings.map((item, index) => ({
+          position: item.position,
+          constructorId: item.Constructor.constructorId,
+          Constructor: {
+            constructorId: item.Constructor.constructorId,
+            name: item.Constructor.name,
+            nationality: item.Constructor.nationality
+          },
+          points: parseFloat(item.points),
+          wins: item.wins ? parseInt(item.wins) : 0,
+          lap_times_avg: 78.5 + (index * 0.3), // Mock lap time data
+          top_speed: 340 + (Math.random() * 15) // Mock top speed data
+        }));
+        
+        console.log(`F1 Ergast data found: ${processedData.length} constructors`);
+        if (processedData.length > 0) return processedData;
       }
-    ];
-    
-  } catch (error) {
-    console.error('F1 API error:', {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data
-    });
-    return [];
+      
+      // Process OpenF1 API response
+      else if (api.name.includes('OpenF1') && Array.isArray(response.data)) {
+        processedData = response.data.slice(0, 10).map((item, index) => ({
+          position: (index + 1).toString(),
+          constructorId: item.team_name?.toLowerCase().replace(/\s+/g, '_') || `team_${index + 1}`,
+          Constructor: {
+            constructorId: item.team_name?.toLowerCase().replace(/\s+/g, '_') || `team_${index + 1}`,
+            name: item.team_name || `Team ${index + 1}`,
+            nationality: item.country_code || 'Unknown'
+          },
+          points: Math.floor(Math.random() * 600) + 100, // Mock points
+          wins: Math.floor(Math.random() * 15), // Mock wins
+          lap_times_avg: 78.2 + (index * 0.4),
+          top_speed: 338 + (Math.random() * 20)
+        }));
+        
+        console.log(`F1 OpenF1 data found: ${processedData.length} items`);
+        if (processedData.length > 0) return processedData;
+      }
+      
+    } catch (error) {
+      console.log(`F1 API ${api.url} failed: ${error.message}`);
+      continue;
+    }
   }
+
+  // If all F1 APIs fail, return comprehensive mock data
+  console.log('All F1 APIs failed, returning mock data');
+  return [
+    {
+      position: "1",
+      constructorId: "red_bull",
+      Constructor: {
+        constructorId: "red_bull",
+        name: "Red Bull Racing",
+        nationality: "Austrian"
+      },
+      points: 860,
+      wins: 21,
+      lap_times_avg: 78.234,
+      top_speed: 347.5
+    },
+    {
+      position: "2",
+      constructorId: "mercedes",
+      Constructor: {
+        constructorId: "mercedes",
+        name: "Mercedes",
+        nationality: "German"
+      },
+      points: 409,
+      wins: 8,
+      lap_times_avg: 78.891,
+      top_speed: 344.2
+    },
+    {
+      position: "3",
+      constructorId: "ferrari",
+      Constructor: {
+        constructorId: "ferrari",
+        name: "Ferrari",
+        nationality: "Italian"
+      },
+      points: 406,
+      wins: 5,
+      lap_times_avg: 78.567,
+      top_speed: 345.8
+    },
+    {
+      position: "4",
+      constructorId: "mclaren",
+      Constructor: {
+        constructorId: "mclaren",
+        name: "McLaren",
+        nationality: "British"
+      },
+      points: 302,
+      wins: 2,
+      lap_times_avg: 79.123,
+      top_speed: 342.1
+    },
+    {
+      position: "5",
+      constructorId: "aston_martin",
+      Constructor: {
+        constructorId: "aston_martin",
+        name: "Aston Martin",
+        nationality: "British"
+      },
+      points: 280,
+      wins: 1,
+      lap_times_avg: 79.445,
+      top_speed: 340.9
+    }
+  ];
 }
 
 async function fetchFootballData(season = '2024') {
-  // Try current season first, then fallback to known good seasons
-  const seasonsToTry = [season, '2024', '2023'];
+  // Try multiple seasons - European football seasons run differently
+  const seasonsToTry = [season, '2024', '2023', '2022'];
   
   for (const trySeason of seasonsToTry) {
     // Try standings first, then teams as fallback
@@ -394,33 +555,63 @@ async function fetchFootballData(season = '2024') {
     }
   }
   
-  // If all seasons fail, return mock data
+  // If all APIs fail, return mock data for demonstration
   console.log('Football APIs failed, returning mock data');
   return [
     {
-      team: { name: "Manchester City", logo: "https://via.placeholder.com/50" },
+      team: { name: "Manchester City", city: "Manchester" },
       goals: { for: 89, against: 31 },
-      assists: 67, xg: 85.4, wins: 28, draws: 7, losses: 3, points: 91, rank: 1
+      assists: 67,
+      xg: 92.3,
+      wins: 28,
+      draws: 7,
+      losses: 3,
+      points: 91,
+      rank: 1
     },
     {
-      team: { name: "Arsenal", logo: "https://via.placeholder.com/50" },
-      goals: { for: 91, against: 43 },
-      assists: 72, xg: 88.2, wins: 26, draws: 6, losses: 6, points: 84, rank: 2
+      team: { name: "Arsenal", city: "London" },
+      goals: { for: 91, against: 29 },
+      assists: 71,
+      xg: 88.7,
+      wins: 28,
+      draws: 5,
+      losses: 5,
+      points: 89,
+      rank: 2
     },
     {
-      team: { name: "Manchester United", logo: "https://via.placeholder.com/50" },
-      goals: { for: 58, against: 43 },
-      assists: 45, xg: 62.1, wins: 23, draws: 6, losses: 9, points: 75, rank: 3
+      team: { name: "Manchester United", city: "Manchester" },
+      goals: { for: 57, against: 58 },
+      assists: 45,
+      xg: 62.1,
+      wins: 23,
+      draws: 6,
+      losses: 9,
+      points: 75,
+      rank: 3
     },
     {
-      team: { name: "Newcastle United", logo: "https://via.placeholder.com/50" },
-      goals: { for: 68, against: 33 },
-      assists: 52, xg: 71.3, wins: 19, draws: 14, losses: 5, points: 71, rank: 4
+      team: { name: "Newcastle", city: "Newcastle" },
+      goals: { for: 68, against: 56 },
+      assists: 52,
+      xg: 71.4,
+      wins: 19,
+      draws: 14,
+      losses: 5,
+      points: 71,
+      rank: 4
     },
     {
-      team: { name: "Liverpool", logo: "https://via.placeholder.com/50" },
-      goals: { for: 75, against: 28 },
-      assists: 58, xg: 78.9, wins: 19, draws: 10, losses: 9, points: 67, rank: 5
+      team: { name: "Liverpool", city: "Liverpool" },
+      goals: { for: 75, against: 47 },
+      assists: 59,
+      xg: 78.9,
+      wins: 19,
+      draws: 10,
+      losses: 9,
+      points: 67,
+      rank: 5
     }
   ];
 }
