@@ -107,11 +107,26 @@ function getCacheFile(sport, season) {
 // Improved API request helper with better error handling
 async function makeAPIRequest(url, params, headers, sport = 'unknown') {
   try {
+    console.log(`Making API request for ${sport}:`, {
+      url,
+      params,
+      headers: Object.keys(headers)
+    });
+    
     const response = await axios.get(url, {
       params,
       headers,
       timeout: 10000
     });
+    
+    console.log(`API response for ${sport}:`, {
+      status: response.status,
+      dataType: typeof response.data,
+      hasResponse: !!response.data.response,
+      responseLength: Array.isArray(response.data.response) ? response.data.response.length : 'not array',
+      firstItem: Array.isArray(response.data.response) && response.data.response.length > 0 ? response.data.response[0] : 'none'
+    });
+    
     return {
       success: true,
       data: response.data.response || response.data || [],
@@ -158,13 +173,29 @@ async function fetchBaseballData(season = '2024') {
 
 async function fetchF1Data(season = '2024') {
   try {
-    const response = await axios.get('https://ergast.com/api/f1/current/constructorStandings.json', {
+    // Use season-specific F1 API endpoint
+    const url = season === '2024' || season === new Date().getFullYear().toString() 
+      ? 'https://ergast.com/api/f1/current/constructorStandings.json'
+      : `https://ergast.com/api/f1/${season}/constructorStandings.json`;
+      
+    console.log(`Fetching F1 data from: ${url}`);
+    
+    const response = await axios.get(url, {
       timeout: 10000
     });
+    
+    console.log('F1 API response:', response.data);
+    
     const standings = response.data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings || [];
+    console.log(`F1 standings found: ${standings.length} items`);
+    
     return standings;
   } catch (error) {
-    console.error('F1 API error:', error.message);
+    console.error('F1 API error:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
     return [];
   }
 }
@@ -246,17 +277,23 @@ router.get('/data/:sport', async (req, res) => {
     let data = [];
     let fetchResult = { success: true };
 
+    console.log(`Fetching data for sport: ${sport}, season: ${season}`);
+
     switch (sport.toLowerCase()) {
       case 'basketball':
+        console.log('Calling fetchBasketballData...');
         data = await fetchBasketballData(season);
         break;
       case 'baseball':
+        console.log('Calling fetchBaseballData...');
         data = await fetchBaseballData(season);
         break;
       case 'f1':
+        console.log('Calling fetchF1Data...');
         data = await fetchF1Data(season);
         break;
       case 'football':
+        console.log('Calling fetchFootballData...');
         data = await fetchFootballData(season);
         break;
       default:
@@ -265,6 +302,13 @@ router.get('/data/:sport', async (req, res) => {
           supported: ['basketball', 'baseball', 'f1', 'football']
         });
     }
+
+    console.log(`Data fetched for ${sport} ${season}:`, {
+      dataType: typeof data,
+      isArray: Array.isArray(data),
+      length: Array.isArray(data) ? data.length : 'not array',
+      firstItem: Array.isArray(data) && data.length > 0 ? Object.keys(data[0]) : 'none'
+    });
 
     // Save to cache if we have data
     if (data && data.length > 0) {
@@ -275,6 +319,8 @@ router.get('/data/:sport', async (req, res) => {
       } catch (e) {
         console.warn('Cache write error:', e.message);
       }
+    } else {
+      console.log(`No data to cache for ${sport} ${season}`);
     }
 
     res.json({
