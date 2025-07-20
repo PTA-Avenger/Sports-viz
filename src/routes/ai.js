@@ -69,7 +69,7 @@ async function callGeminiAPI(prompt, data = null, maxLength = 12000) {
     }
 
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       { contents },
       { timeout: 30000 } // 30 second timeout for AI requests
     );
