@@ -176,23 +176,23 @@ async function fetchBasketballData(season = '2024') {
     return [
       {
         team: { name: "Los Angeles Lakers", logo: "https://via.placeholder.com/50" },
-        wins: 45, losses: 37, points: 2840, rank: 7
+        ppg: 112.5, rpg: 45.2, apg: 27.8, pie: 0.52, wins: 45, losses: 37, rank: 7
       },
       {
         team: { name: "Boston Celtics", logo: "https://via.placeholder.com/50" },
-        wins: 57, losses: 25, points: 3120, rank: 2
+        ppg: 118.2, rpg: 46.8, apg: 26.4, pie: 0.58, wins: 57, losses: 25, rank: 2
       },
       {
         team: { name: "Golden State Warriors", logo: "https://via.placeholder.com/50" },
-        wins: 44, losses: 38, points: 2790, rank: 6
+        ppg: 115.1, rpg: 43.9, apg: 29.2, pie: 0.54, wins: 44, losses: 38, rank: 6
       },
       {
         team: { name: "Miami Heat", logo: "https://via.placeholder.com/50" },
-        wins: 44, losses: 38, points: 2680, rank: 8
+        ppg: 108.7, rpg: 42.1, apg: 25.9, pie: 0.49, wins: 44, losses: 38, rank: 8
       },
       {
         team: { name: "Phoenix Suns", logo: "https://via.placeholder.com/50" },
-        wins: 45, losses: 37, points: 2920, rank: 4
+        ppg: 114.8, rpg: 44.5, apg: 28.1, pie: 0.55, wins: 45, losses: 37, rank: 4
       }
     ];
   }
@@ -234,23 +234,33 @@ async function fetchBaseballData(season = '2024') {
   return [
     {
       team: { name: "New York Yankees", logo: "https://via.placeholder.com/50" },
-      wins: 99, losses: 63, runs: 795, rank: 1
+      batting: { ops: 0.789, avg: 0.267, hr: 254, runs: 795, rbi: 756 },
+      pitching: { era: 3.89, wins: 99 },
+      wins: 99, losses: 63, rank: 1
     },
     {
       team: { name: "Los Angeles Dodgers", logo: "https://via.placeholder.com/50" },
-      wins: 100, losses: 62, runs: 847, rank: 1
+      batting: { ops: 0.823, avg: 0.279, hr: 249, runs: 847, rbi: 812 },
+      pitching: { era: 3.64, wins: 100 },
+      wins: 100, losses: 62, rank: 1
     },
     {
       team: { name: "Houston Astros", logo: "https://via.placeholder.com/50" },
-      wins: 90, losses: 72, runs: 729, rank: 2
+      batting: { ops: 0.756, avg: 0.255, hr: 214, runs: 729, rbi: 698 },
+      pitching: { era: 4.12, wins: 90 },
+      wins: 90, losses: 72, rank: 2
     },
     {
       team: { name: "Atlanta Braves", logo: "https://via.placeholder.com/50" },
-      wins: 104, losses: 58, runs: 947, rank: 1
+      batting: { ops: 0.834, avg: 0.271, hr: 307, runs: 947, rbi: 901 },
+      pitching: { era: 3.45, wins: 104 },
+      wins: 104, losses: 58, rank: 1
     },
     {
       team: { name: "San Diego Padres", logo: "https://via.placeholder.com/50" },
-      wins: 89, losses: 73, runs: 705, rank: 4
+      batting: { ops: 0.721, avg: 0.248, hr: 192, runs: 705, rbi: 672 },
+      pitching: { era: 4.28, wins: 89 },
+      wins: 89, losses: 73, rank: 4
     }
   ];
 }
@@ -312,7 +322,10 @@ async function fetchF1Data(season = '2024') {
           name: "Red Bull Racing",
           nationality: "Austrian"
         },
-        points: "860"
+        points: 860,
+        wins: 21,
+        lap_times_avg: 78.234,
+        top_speed: 347.5
       },
       {
         position: "2",
@@ -322,7 +335,10 @@ async function fetchF1Data(season = '2024') {
           name: "Mercedes",
           nationality: "German"
         },
-        points: "409"
+        points: 409,
+        wins: 8,
+        lap_times_avg: 78.891,
+        top_speed: 344.2
       },
       {
         position: "3",
@@ -332,7 +348,10 @@ async function fetchF1Data(season = '2024') {
           name: "Ferrari",
           nationality: "Italian"
         },
-        points: "406"
+        points: 406,
+        wins: 5,
+        lap_times_avg: 79.123,
+        top_speed: 342.8
       }
     ];
     
@@ -380,23 +399,28 @@ async function fetchFootballData(season = '2024') {
   return [
     {
       team: { name: "Manchester City", logo: "https://via.placeholder.com/50" },
-      wins: 28, draws: 7, losses: 3, points: 91, rank: 1
+      goals: { for: 89, against: 31 },
+      assists: 67, xg: 85.4, wins: 28, draws: 7, losses: 3, points: 91, rank: 1
     },
     {
       team: { name: "Arsenal", logo: "https://via.placeholder.com/50" },
-      wins: 26, draws: 6, losses: 6, points: 84, rank: 2
+      goals: { for: 91, against: 43 },
+      assists: 72, xg: 88.2, wins: 26, draws: 6, losses: 6, points: 84, rank: 2
     },
     {
       team: { name: "Manchester United", logo: "https://via.placeholder.com/50" },
-      wins: 23, draws: 6, losses: 9, points: 75, rank: 3
+      goals: { for: 58, against: 43 },
+      assists: 45, xg: 62.1, wins: 23, draws: 6, losses: 9, points: 75, rank: 3
     },
     {
       team: { name: "Newcastle United", logo: "https://via.placeholder.com/50" },
-      wins: 19, draws: 14, losses: 5, points: 71, rank: 4
+      goals: { for: 68, against: 33 },
+      assists: 52, xg: 71.3, wins: 19, draws: 14, losses: 5, points: 71, rank: 4
     },
     {
       team: { name: "Liverpool", logo: "https://via.placeholder.com/50" },
-      wins: 19, draws: 10, losses: 9, points: 67, rank: 5
+      goals: { for: 75, against: 28 },
+      assists: 58, xg: 78.9, wins: 19, draws: 10, losses: 9, points: 67, rank: 5
     }
   ];
 }
