@@ -158,7 +158,7 @@ async function fetchBasketballData(season = '2024') {
   for (const trySeason of seasonsToTry) {
     // Try standings first, then teams as fallback
     let result = await makeAPIRequest(
-      'https://v3.basketball.api-sports.io/standings',
+      'https://v1.basketball.api-sports.io/standings',
       { league: 12, season: trySeason }, // NBA league
       { 'x-apisports-key': API_KEY },
       'Basketball Standings'
@@ -167,7 +167,7 @@ async function fetchBasketballData(season = '2024') {
     if (!result.success || result.data.length === 0) {
       // Fallback to teams
       result = await makeAPIRequest(
-        'https://v3.basketball.api-sports.io/teams',
+        'https://v1.basketball.api-sports.io/teams',
         { league: 12, season: trySeason },
         { 'x-apisports-key': API_KEY },
         'Basketball Teams'
@@ -231,6 +231,177 @@ async function fetchBasketballData(season = '2024') {
       pie: 0.512,
       wins: 44,
       losses: 38,
+      rank: 5
+    }
+  ];
+}
+
+// Add NBA data fetcher using the NBA-specific API
+async function fetchNBAData(season = '2024') {
+  // NBA API uses different base URL
+  const seasonsToTry = [season, '2024', '2023', '2022', '2021'];
+  
+  for (const trySeason of seasonsToTry) {
+    // Try standings first, then teams as fallback
+    let result = await makeAPIRequest(
+      'https://v2.nba.api-sports.io/standings',
+      { league: 'standard', season: trySeason },
+      { 'x-apisports-key': API_KEY },
+      'NBA Standings'
+    );
+    
+    if (!result.success || result.data.length === 0) {
+      // Fallback to teams
+      result = await makeAPIRequest(
+        'https://v2.nba.api-sports.io/teams',
+        { league: 'standard', season: trySeason },
+        { 'x-apisports-key': API_KEY },
+        'NBA Teams'
+      );
+    }
+    
+    if (result.success && result.data.length > 0) {
+      console.log(`NBA data found for season ${trySeason}`);
+      return result.data;
+    }
+  }
+  
+  // If all APIs fail, return NBA mock data
+  console.log('NBA APIs failed, returning mock data');
+  return [
+    {
+      team: { name: "Celtics", city: "Boston" },
+      ppg: 120.6,
+      rpg: 46.3,
+      apg: 26.9,
+      pie: 0.598,
+      wins: 64,
+      losses: 18,
+      rank: 1
+    },
+    {
+      team: { name: "Nuggets", city: "Denver" },
+      ppg: 114.7,
+      rpg: 44.1,
+      apg: 27.5,
+      pie: 0.545,
+      wins: 57,
+      losses: 25,
+      rank: 2
+    },
+    {
+      team: { name: "Thunder", city: "Oklahoma City" },
+      ppg: 118.2,
+      rpg: 44.8,
+      apg: 28.1,
+      pie: 0.567,
+      wins: 57,
+      losses: 25,
+      rank: 3
+    },
+    {
+      team: { name: "Timberwolves", city: "Minnesota" },
+      ppg: 115.9,
+      rpg: 43.2,
+      apg: 29.8,
+      pie: 0.534,
+      wins: 56,
+      losses: 26,
+      rank: 4
+    },
+    {
+      team: { name: "Knicks", city: "New York" },
+      ppg: 110.5,
+      rpg: 42.9,
+      apg: 25.3,
+      pie: 0.512,
+      wins: 50,
+      losses: 32,
+      rank: 5
+    }
+  ];
+}
+
+// Add NFL data fetcher
+async function fetchNFLData(season = '2024') {
+  const seasonsToTry = [season, '2024', '2023', '2022'];
+  
+  for (const trySeason of seasonsToTry) {
+    // Try standings first, then teams as fallback
+    let result = await makeAPIRequest(
+      'https://v1.american-football.api-sports.io/standings',
+      { league: 1, season: trySeason }, // NFL league
+      { 'x-apisports-key': API_KEY },
+      'NFL Standings'
+    );
+    
+    if (!result.success || result.data.length === 0) {
+      // Fallback to teams
+      result = await makeAPIRequest(
+        'https://v1.american-football.api-sports.io/teams',
+        { league: 1, season: trySeason },
+        { 'x-apisports-key': API_KEY },
+        'NFL Teams'
+      );
+    }
+    
+    if (result.success && result.data.length > 0) {
+      console.log(`NFL data found for season ${trySeason}`);
+      return result.data;
+    }
+  }
+  
+  // If all APIs fail, return NFL mock data
+  console.log('NFL APIs failed, returning mock data');
+  return [
+    {
+      team: { name: "Chiefs", city: "Kansas City" },
+      passing: { yards: 4183, touchdowns: 27, interceptions: 14 },
+      rushing: { yards: 1808, touchdowns: 17 },
+      wins: 14,
+      losses: 3,
+      points_for: 456,
+      points_against: 329,
+      rank: 1
+    },
+    {
+      team: { name: "Bills", city: "Buffalo" },
+      passing: { yards: 4306, touchdowns: 29, interceptions: 18 },
+      rushing: { yards: 2086, touchdowns: 15 },
+      wins: 13,
+      losses: 4,
+      points_for: 482,
+      points_against: 381,
+      rank: 2
+    },
+    {
+      team: { name: "Ravens", city: "Baltimore" },
+      passing: { yards: 3678, touchdowns: 24, interceptions: 7 },
+      rushing: { yards: 2654, touchdowns: 29 },
+      wins: 13,
+      losses: 4,
+      points_for: 531,
+      points_against: 339,
+      rank: 3
+    },
+    {
+      team: { name: "49ers", city: "San Francisco" },
+      passing: { yards: 4102, touchdowns: 28, interceptions: 11 },
+      rushing: { yards: 2237, touchdowns: 27 },
+      wins: 12,
+      losses: 5,
+      points_for: 456,
+      points_against: 298,
+      rank: 4
+    },
+    {
+      team: { name: "Cowboys", city: "Dallas" },
+      passing: { yards: 4467, touchdowns: 36, interceptions: 9 },
+      rushing: { yards: 1808, touchdowns: 20 },
+      wins: 12,
+      losses: 5,
+      points_for: 509,
+      points_against: 342,
       rank: 5
     }
   ];
@@ -639,7 +810,7 @@ router.get('/data/:sport', async (req, res) => {
   if (!sport) {
     return res.status(400).json({ 
       error: 'Sport parameter is required',
-      supported: ['basketball', 'baseball', 'f1', 'football']
+      supported: ['basketball', 'nba', 'nfl', 'baseball', 'f1', 'football']
     });
   }
 
@@ -690,6 +861,14 @@ router.get('/data/:sport', async (req, res) => {
         console.log('Calling fetchBasketballData...');
         data = await fetchBasketballData(season);
         break;
+      case 'nba':
+        console.log('Calling fetchNBAData...');
+        data = await fetchNBAData(season);
+        break;
+      case 'nfl':
+        console.log('Calling fetchNFLData...');
+        data = await fetchNFLData(season);
+        break;
       case 'baseball':
         console.log('Calling fetchBaseballData...');
         data = await fetchBaseballData(season);
@@ -705,7 +884,7 @@ router.get('/data/:sport', async (req, res) => {
       default:
         return res.status(404).json({ 
           error: 'Sport not supported',
-          supported: ['basketball', 'baseball', 'f1', 'football']
+          supported: ['basketball', 'nba', 'nfl', 'baseball', 'f1', 'football']
         });
     }
 

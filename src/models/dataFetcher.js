@@ -18,7 +18,7 @@ async function fetchSportsData(sport, season = '2024') {
       break;
 
     case 'basketball':
-      url = `https://v3.basketball.api-sports.io/games`;
+      url = `https://v1.basketball.api-sports.io/games`;
       headers['x-apisports-key'] = apiKey;
       break;
 
